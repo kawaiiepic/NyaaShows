@@ -12,7 +12,9 @@ void main() async {
   // NyaaShows.dataManager.writeHistory();
   runApp(const MyApp());
 
-  await NyaaShows.traktModel.loadHistories();
+  NyaaShows.dataManager.checkData();
+
+  // await NyaaShows.traktModel();
 }
 
 class MyApp extends StatelessWidget {

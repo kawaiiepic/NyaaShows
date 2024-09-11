@@ -1,36 +1,30 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:nyaashows/data/data_manager.dart';
 import 'package:nyaashows/main.dart';
+import 'package:nyaashows/pages/secondRoute.dart';
+import 'package:nyaashows/trakt.dart';
 
 class MyHomePageState extends State<MyHomePage> {
   ScrollController scrollController = ScrollController();
   ScrollController scrollController1 = ScrollController();
 
-  Future<void> _showMyDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('AlertDialog Title'),
-          content: const SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('This is a demo alert dialog.'),
-                Text('Would you like to approve of this message?'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Approve'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  double containerHeight() {
+    var height = MediaQuery.of(context).size.height;
+    return 280;
+  }
+
+  double containerWidth() {
+    var width = MediaQuery.of(context).size.width;
+    return 180;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    DataManager.traktData.setShows();
+    DataManager.tvdbData.loadArtworks();
   }
 
   @override
@@ -59,11 +53,14 @@ class MyHomePageState extends State<MyHomePage> {
                   onSelected: (Menu menu) {
                     switch (menu) {
                       case Menu.settings:
+                        break;
                       // TODO: Handle this case.
                       case Menu.trakt:
                         NyaaShows.traktModel.auth(context);
+                        break;
                       // TODO: Handle this case.
                       case Menu.about:
+                        break;
                       // TODO: Handle this case.
                     }
                   },
@@ -101,117 +98,188 @@ class MyHomePageState extends State<MyHomePage> {
             Column(children: [
               Expanded(
                   child: ListView(children: [
-                Container(
-                    height: 200,
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    alignment: Alignment.center,
-                    color: Colors.red.shade200,
-                    child: const Text("Item 1")),
                 const Text("Continue Watching"),
                 SizedBox(
-                    height: 200,
-                    child: Row(children: [
-                      IconButton(
-                          icon: const Icon(Icons.arrow_left_rounded),
-                          iconSize: 50,
-                          padding: EdgeInsets.zero,
-                          onPressed: () {
-                            scrollController.animateTo(
-                                scrollController.offset - 800,
-                                duration: const Duration(seconds: 1),
-                                curve: Curves.easeIn);
-                          }),
-                      Expanded(
-                          child: ListenableBuilder(
-                              listenable: NyaaShows.traktModel,
-                              builder: (context, widget) {
-                                return ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    controller: scrollController,
-                                    itemCount:
-                                        NyaaShows.traktModel.histories.length,
-                                    itemBuilder: (context, index) {
-                                      var history = NyaaShows
-                                          .traktModel.histories
-                                          .elementAt(index);
-                                      var title = history.show.entries
-                                          .elementAt(0)
-                                          .value;
-
-                                      return Container(
-                                        alignment: Alignment.center,
-                                        margin: const EdgeInsets.all(8),
-                                        color: Colors.pink.shade50,
-                                        width: 400,
-                                        child: Text(title),
-                                      );
-                                    });
-                              })),
-                      IconButton(
-                          icon: const Icon(Icons.arrow_right_rounded),
-                          iconSize: 50,
-                          padding: EdgeInsets.zero,
-                          onPressed: () {
-                            scrollController.animateTo(
-                                scrollController.offset + 800,
-                                duration: const Duration(seconds: 1),
-                                curve: Curves.easeIn);
-                          })
-                    ])),
-                const Text("Up Next"),
-                SizedBox(
-                    height: 300,
-                    child: Row(children: [
-                      IconButton(
-                          icon: const Icon(Icons.arrow_left_rounded),
-                          iconSize: 50,
-                          padding: EdgeInsets.zero,
-                          onPressed: () {
-                            scrollController1.animateTo(
-                                scrollController1.offset - 800,
-                                duration: const Duration(seconds: 1),
-                                curve: Curves.easeIn);
-                          }),
-                      Expanded(
-                          child: ListView.builder(
+                    height: containerHeight(),
+                    child: FutureBuilder<List<Show>>(
+                      future: DataManager.traktData.showData,
+                      builder: (context, snapshot) {
+                        Widget child;
+                        if (snapshot.hasData) {
+                          print(snapshot.data?.length);
+                          child = ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              controller: scrollController1,
-                              itemCount: 50,
+                              controller: scrollController,
+                              itemCount: snapshot.data?.length,
                               itemBuilder: (context, index) {
-                                return Container(
-                                  alignment: Alignment.center,
-                                  margin: const EdgeInsets.all(8),
-                                  color: Colors.pink.shade50,
-                                  width: 200,
-                                  child: Text('${index + 1}'),
+                                var show = snapshot.data?[index];
+                                int? tvdb = show?.show.ids.tvdb;
+                                var container;
+
+                                return FutureBuilder<Map<String, Uint8List>>(
+                                  future: DataManager.tvdbData.imageData,
+                                  builder: (context, snapshot) {
+                                    Widget tab = Container();
+                                    if (snapshot.hasData) {
+                                      // Image? image = snapshot.data![tvdb];
+                                      var data = snapshot.data;
+
+                                      if (data != null) {
+                                        data[tvdb.toString()];
+
+                                        // NetworkI
+                                        tab = Container(
+                                          decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                              image: MemoryImage(
+                                                  ),
+                                              fit: BoxFit.fill,
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                          ),
+                                          alignment: Alignment.center,
+                                          margin: const EdgeInsets.all(8),
+                                          width: containerWidth(),
+                                          child: InkWell(
+                                              onTap: () {
+                                                print("Clicked!");
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const SecondRoute()),
+                                                );
+                                              },
+                                              child: Tooltip(
+                                                  message:
+                                                      '${show?.show.title}',
+                                                  child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              18),
+                                                      child: Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .end,
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Container(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .bottomCenter,
+                                                                    color: const Color
+                                                                        .fromARGB(
+                                                                        218,
+                                                                        252,
+                                                                        228,
+                                                                        236),
+                                                                    child: Text(
+                                                                      '${show?.show.title}',
+                                                                      textAlign:
+                                                                          TextAlign
+                                                                              .center,
+                                                                      overflow:
+                                                                          TextOverflow
+                                                                              .ellipsis,
+                                                                    ))
+                                                              ]),
+                                                          LinearProgressIndicator(
+                                                            minHeight: 8,
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        5),
+                                                            value: 0.5,
+                                                            semanticsLabel:
+                                                                'Linear progress indicator',
+                                                          )
+                                                        ],
+                                                      )))),
+                                          // child: Image(
+                                          //   fit: BoxFit.contain,
+                                          //   image: NetworkImage(url),
+                                          // ), // Text(title)
+                                        );
+                                      }
+                                    }
+
+                                    return tab;
+                                  },
                                 );
-                              })),
-                      IconButton(
-                          icon: const Icon(Icons.arrow_right_rounded),
-                          iconSize: 50,
-                          padding: EdgeInsets.zero,
-                          onPressed: () {
-                            scrollController1.animateTo(
-                                scrollController1.offset + 800,
-                                duration: const Duration(seconds: 1),
-                                curve: Curves.easeIn);
-                          })
-                    ])),
-                Container(
-                    height: 200,
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    alignment: Alignment.center,
-                    color: Colors.red.shade200,
-                    child: const Text("Item 2")),
-                Container(
-                    height: 200,
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    alignment: Alignment.center,
-                    color: Colors.red.shade200,
-                    child: const Text("Item 3"))
+                              });
+                        } else if (snapshot.hasError) {
+                          // TODO: Show error message.
+                          child = const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 60,
+                          );
+                        } else {
+                          // TODO: Show loading icon.
+                          child = const SizedBox(
+                            width: 60,
+                            height: 60,
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        return Row(children: [
+                          IconButton(
+                              icon: const Icon(Icons.arrow_left_rounded),
+                              iconSize: 50,
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                scrollController.animateTo(
+                                    scrollController.offset - 800,
+                                    duration: const Duration(seconds: 1),
+                                    curve: Curves.easeIn);
+                              }),
+                          Expanded(child: child),
+                          IconButton(
+                              icon: const Icon(Icons.arrow_right_rounded),
+                              iconSize: 50,
+                              padding: EdgeInsets.zero,
+                              onPressed: () {
+                                scrollController.animateTo(
+                                    scrollController.offset + 800,
+                                    duration: const Duration(seconds: 1),
+                                    curve: Curves.easeIn);
+                              })
+                        ]);
+                      },
+
+                      // child: ListenableBuilder(
+                      //     listenable: DataManager.traktData,
+                      //     builder: (context, widget) {
+                      //       int length = 0;
+
+                      //       return ListView.builder(
+                      //           scrollDirection: Axis.horizontal,
+                      //           controller: scrollController,
+                      //           itemCount: length,
+                      //           itemBuilder: (context, index) {
+                      //             return Container(
+                      //               alignment: Alignment.center,
+                      //               margin: const EdgeInsets.all(8),
+                      //               color: Colors.pink.shade50,
+                      //               width: 200,
+                      //               child: const Image(
+                      //                 fit: BoxFit.cover,
+                      //                 image: NetworkImage(
+                      //                     'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg'),
+                      //               ), // Text(title)
+                      //             );
+                      //           });
+                      //     })
+                    )),
               ]))
             ]),
 

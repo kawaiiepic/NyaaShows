@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:nyaashows/data/data_manager.dart';
+import 'package:nyaashows/locale_fix.dart';
 import 'trakt.dart';
 import 'widgets/scaffold.dart' as scaffold;
 
 class NyaaShows {
   static TraktModel traktModel = TraktModel();
   static DataManager dataManager = DataManager();
+  static RealDebridAPI realDebrid = RealDebridAPI();
 }
 
 void main() async {
-  // NyaaShows.dataManager.writeHistory();
+  setNumericLocaleToC();
+  WidgetsFlutterBinding.ensureInitialized();
+  // Necessary initialization for package:media_kit.
+  MediaKit.ensureInitialized();
+
   runApp(const MyApp());
 
   NyaaShows.dataManager.checkData();
-
-  // await NyaaShows.traktModel();
 }
 
 class MyApp extends StatelessWidget {
@@ -52,4 +57,4 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => scaffold.MyHomePageState();
 }
 
-enum Menu { settings, trakt, about }
+enum Menu { settings, trakt, about, realdebrid }

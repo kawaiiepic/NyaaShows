@@ -27,6 +27,8 @@ environment:
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
+package: media_kit_native_event_loop
+
 dependencies:
   flutter:
     sdk: flutter
@@ -35,10 +37,14 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   http: ^1.2.2
-  flutter_web_auth: ^0.5.0
   url_launcher: ^6.3.0
   flutter_web_auth_2: ^3.1.2
   path_provider: ^2.1.4
+  media_kit: ^1.1.11
+  media_kit_video: ^0.0.4
+  media_kit_libs_video: ^1.0.5
+  media_kit_libs_linux: ^1.1.3
+  html_parser_plus: ^0.1.4
 
 dev_dependencies:
   flutter_test:
@@ -50,6 +56,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
+  test: ^1.25.7
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

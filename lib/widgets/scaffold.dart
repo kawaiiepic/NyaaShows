@@ -24,7 +24,6 @@ class MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     DataManager.traktData.setShows();
-    DataManager.tvdbData.loadArtworks();
   }
 
   @override
@@ -62,6 +61,10 @@ class MyHomePageState extends State<MyHomePage> {
                       case Menu.about:
                         break;
                       // TODO: Handle this case.
+                      case Menu.realdebrid:
+                        NyaaShows.realDebrid.loginPopup(context);
+                        break;
+                      // TODO: Handle this case.
                     }
                   },
                   icon: const Padding(
@@ -82,6 +85,13 @@ class MyHomePageState extends State<MyHomePage> {
                           child: ListTile(
                             leading: Icon(Icons.browser_updated_rounded),
                             title: Text('Connect Trakt'),
+                          ),
+                        ),
+                        const PopupMenuItem<Menu>(
+                          value: Menu.realdebrid,
+                          child: ListTile(
+                            leading: Icon(Icons.download),
+                            title: Text('Connect Real-Debrid'),
                           ),
                         ),
                         const PopupMenuItem<Menu>(
@@ -116,23 +126,21 @@ class MyHomePageState extends State<MyHomePage> {
                                 int? tvdb = show?.show.ids.tvdb;
                                 var container;
 
-                                return FutureBuilder<Map<String, Uint8List>>(
-                                  future: DataManager.tvdbData.imageData,
+                                return FutureBuilder<Uint8List>(
+                                  future: DataManager.tvdbData
+                                      .retrieveArtwork(tvdb!),
                                   builder: (context, snapshot) {
                                     Widget tab = Container();
                                     if (snapshot.hasData) {
                                       // Image? image = snapshot.data![tvdb];
                                       var data = snapshot.data;
-
+                                      // print('Data: $data');
                                       if (data != null) {
-                                        data[tvdb.toString()];
-
                                         // NetworkI
                                         tab = Container(
                                           decoration: BoxDecoration(
                                             image: DecorationImage(
-                                              image: MemoryImage(
-                                                  ),
+                                              image: MemoryImage(data),
                                               fit: BoxFit.fill,
                                             ),
                                             borderRadius:
@@ -148,7 +156,8 @@ class MyHomePageState extends State<MyHomePage> {
                                                   context,
                                                   MaterialPageRoute(
                                                       builder: (context) =>
-                                                          const SecondRoute()),
+                                                          SecondRoute(
+                                                              show: show!)),
                                                 );
                                               },
                                               child: Tooltip(
@@ -255,30 +264,6 @@ class MyHomePageState extends State<MyHomePage> {
                               })
                         ]);
                       },
-
-                      // child: ListenableBuilder(
-                      //     listenable: DataManager.traktData,
-                      //     builder: (context, widget) {
-                      //       int length = 0;
-
-                      //       return ListView.builder(
-                      //           scrollDirection: Axis.horizontal,
-                      //           controller: scrollController,
-                      //           itemCount: length,
-                      //           itemBuilder: (context, index) {
-                      //             return Container(
-                      //               alignment: Alignment.center,
-                      //               margin: const EdgeInsets.all(8),
-                      //               color: Colors.pink.shade50,
-                      //               width: 200,
-                      //               child: const Image(
-                      //                 fit: BoxFit.cover,
-                      //                 image: NetworkImage(
-                      //                     'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg'),
-                      //               ), // Text(title)
-                      //             );
-                      //           });
-                      //     })
                     )),
               ]))
             ]),
@@ -287,11 +272,11 @@ class MyHomePageState extends State<MyHomePage> {
             const Center(child: Text("Discover")),
             const Center(child: Text("Calendar")),
           ]),
-          // floatingActionButton: FloatingActionButton(
-          //   onPressed: _incrementCounter,
-          //   tooltip: 'Increment',
-          //   child: const Icon(Icons.add),
-          // ), // This trailing comma makes auto-formatting nicer for build methods.
+          floatingActionButton: FloatingActionButton(
+            onPressed: () {},
+            tooltip: 'Search',
+            child: const Icon(Icons.search),
+          ), // This trailing comma makes auto-formatting nicer for build methods.
         ));
   }
 }

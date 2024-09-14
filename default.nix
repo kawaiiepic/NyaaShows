@@ -14,5 +14,37 @@ pkgs.mkShell {
     pcre2
     pkg-config
     cmake
+    mpv
+    libass
+    mimalloc
+    ffmpeg
+    libplacebo
+    libunwind
+    shaderc
+    vulkan-loader
+    lcms
+    libdovi
+    libdvdnav
+    libdvdread
+    mujs
+    libbluray
+    lua
+    rubberband
+    SDL2
+    libuchardet
+    zimg
+    alsa-lib
+    openal
+    pipewire
+    pulseaudio
+    libcaca
+    libdrm
+    mesa
+    xorg.libXScrnSaver
+    xorg.libXpresent
+    xorg.libXv
+    nv-codec-headers-12
+    libva
+    libvdpau
   ];
 }

@@ -1,39 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:nyaashows/data/data_manager.dart';
-import 'package:nyaashows/locale_fix.dart';
-import 'trakt.dart';
-import 'widgets/scaffold.dart' as scaffold;
+import 'package:nyaashows/data/trakt/show.dart';
+import 'package:nyaashows/utils/locale_fix.dart';
+import 'package:video_player_media_kit/video_player_media_kit.dart';
+import 'pages/scaffold.dart' as scaffold;
 
 class NyaaShows {
-  static TraktModel traktModel = TraktModel();
+  static Trakt trakt = Trakt();
   static DataManager dataManager = DataManager();
   static RealDebridAPI realDebrid = RealDebridAPI();
 }
 
 void main() async {
   setNumericLocaleToC();
-  WidgetsFlutterBinding.ensureInitialized();
-  // Necessary initialization for package:media_kit.
-  MediaKit.ensureInitialized();
+  VideoPlayerMediaKit.ensureInitialized(
+    android: true, // default: false    -    dependency: media_kit_libs_android_video
+    iOS: true, // default: false    -    dependency: media_kit_libs_ios_video
+    macOS: true, // default: false    -    dependency: media_kit_libs_macos_video
+    windows: true, // default: false    -    dependency: media_kit_libs_windows_video
+    linux: true, // default: false    -    dependency: media_kit_libs_linux
+  );
 
-  runApp(const MyApp());
+  runApp(const NyaaApp());
 
   NyaaShows.dataManager.checkData();
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class NyaaApp extends StatelessWidget {
+  const NyaaApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'NyaaShows',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        brightness: Brightness.light,
+        /* light theme settings */
       ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        /* dark theme settings */
+      ),
+      themeMode: ThemeMode.system,
+      /* ThemeMode.system to follow system theme,
+         ThemeMode.light for light theme,
+         ThemeMode.dark for dark theme
+      */
+      debugShowCheckedModeBanner: false,
+      // theme: ThemeData(
+      //   colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      //   useMaterial3: true,
+      // ),
       home: const MyHomePage(title: 'NyaaShows'),
     );
   }
@@ -41,15 +58,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 

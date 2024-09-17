@@ -46,5 +46,6 @@ pkgs.mkShell {
     nv-codec-headers-12
     libva
     libvdpau
+    ninja
   ];
 }

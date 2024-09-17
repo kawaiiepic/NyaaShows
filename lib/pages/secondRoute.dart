@@ -1,9 +1,9 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:nyaashows/pages/player.dart';
-import 'package:nyaashows/trakt.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:nyaashows/data/data_manager.dart';
+import 'package:nyaashows/data/trakt/progress.dart';
+import 'package:nyaashows/data/trakt/show.dart';
+import 'package:nyaashows/pages/torrent_links.dart';
 
 class SecondRoute extends StatelessWidget {
   const SecondRoute({super.key, required this.show});
@@ -13,27 +13,52 @@ class SecondRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(show.show.title),
-      ),
-      body: Center(
-          child: Column(
-        children: [
-          Text(show.lastWatchedAt.toString()),
-          Text(show.plays.toString()),
-          Text(show.seasons.length.toString()),
-          Text(show.show.title),
-          Text(show.show.year.toString()),
-          Text(show.show.ids.toString()),
-          ElevatedButton(
-            onPressed: () {
-              Process.run("mpv", ['https://chi1-4.download.real-debrid.com/d/OYSU4N3ENQCDE85/%5BAnime%20Time%5D%20Nanatsu%20no%20Taizai%20-%20Seisen%20no%20Shirushi%20-%2002.mkv']);
-            },
-            child: const Text('Play'),
-          )
-        ],
-      )),
-    );
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(show.show.title),
+        ),
+        body: FutureBuilder<TraktProgress?>(
+            future: DataManager.traktData.showProgress(show.show.ids.trakt),
+            builder: (context, snapshot) {
+              Widget child;
+
+              if (snapshot.hasData) {
+                child = Center(
+                    child: Column(
+                  children: [
+                    Text(show.lastWatchedAt.toString()),
+                    Text(show.plays.toString()),
+                    Text(show.seasons.length.toString()),
+                    Text(show.show.title),
+                    Text(show.show.year.toString()),
+                    Text(show.show.ids.toString()),
+                    Text(snapshot.data!.toString()),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => TorrentLinks(show: show, progress: snapshot.data!)));
+                      },
+                      child: const Text('Play'),
+                    )
+                  ],
+                ));
+              } else if (snapshot.hasError) {
+                child = const Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 60,
+                );
+              } else {
+                child = const SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              return child;
+            }));
   }
 }

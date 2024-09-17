@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:nyaashows/data/data_manager.dart';
+import 'package:nyaashows/data/trakt/show.dart';
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/pages/secondRoute.dart';
-import 'package:nyaashows/trakt.dart';
 
 class MyHomePageState extends State<MyHomePage> {
   ScrollController scrollController = ScrollController();
@@ -55,7 +55,7 @@ class MyHomePageState extends State<MyHomePage> {
                         break;
                       // TODO: Handle this case.
                       case Menu.trakt:
-                        NyaaShows.traktModel.auth(context);
+                        NyaaShows.trakt.auth(context);
                         break;
                       // TODO: Handle this case.
                       case Menu.about:
@@ -114,6 +114,8 @@ class MyHomePageState extends State<MyHomePage> {
                     child: FutureBuilder<List<Show>>(
                       future: DataManager.traktData.showData,
                       builder: (context, snapshot) {
+                        
+
                         Widget child;
                         if (snapshot.hasData) {
                           print(snapshot.data?.length);

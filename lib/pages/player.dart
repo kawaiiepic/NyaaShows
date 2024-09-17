@@ -1,29 +1,37 @@
-import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:flutter/material.dart';
 
 class VideoPlayer extends StatefulWidget {
-  const VideoPlayer({Key? key}) : super(key: key);
+  final Media media;
+
+  const VideoPlayer({super.key, required this.media});
+
   @override
-  State<VideoPlayer> createState() => PlayerState();
+  State<VideoPlayer> createState() => MyScreenState();
 }
 
-class PlayerState extends State<VideoPlayer> {
+class MyScreenState extends State<VideoPlayer> {
   // Create a [Player] to control playback.
-  final player = Player();
+  late final player = Player();
   // Create a [VideoController] to handle video output from [Player].
-  late final controller =
-      VideoController.create(player.handle, enableHardwareAcceleration: false);
+  late final controller = VideoController(player);
 
   @override
   void initState() {
     super.initState();
     // Play a [Media] or [Playlist].
+    print(player.state.position);
+    super.widget.media;
+    player.open(super.widget.media);
+  }
 
-    player.open(
-        Media(
-            'https://chi7-4.download.real-debrid.com/d/NR5LMICJI7KUS76/Criminal.Minds.S01E01.1080p.WEBRip.x265-KONTRAST.mp4'),
-        play: false);
+  void setVideo(String url) {
+    player.open(Media(url));
+  }
+
+  void getPosition() {
+    print(player.state.position);
   }
 
   @override
@@ -34,35 +42,51 @@ class PlayerState extends State<VideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<VideoController>(
-        future: controller,
-        builder: (context, snapshot) {
-          Widget child;
-
-          if (snapshot.hasData) {
-            child = Scaffold(
-                appBar: AppBar(
-                  backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-                  title: Text('Title'),
-                ),
-                body: Center(
-                  child: Video(controller: snapshot.data),
-                ));
-          } else if (snapshot.hasError) {
-            child = const Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 60,
-            );
-          } else {
-            child = const SizedBox(
-              width: 60,
-              height: 60,
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          return child;
-        });
+    return MaterialDesktopVideoControlsTheme(
+      normal: MaterialDesktopVideoControlsThemeData(
+        // Modify theme options:
+        seekBarThumbColor: Colors.pink.shade200,
+        seekBarPositionColor: Colors.pink.shade200,
+        toggleFullscreenOnDoublePress: false,
+        // Modify top button bar:
+        topButtonBar: [
+          const Spacer(),
+          MaterialDesktopCustomButton(
+            onPressed: () {
+              debugPrint('Custom "Settings" button pressed.');
+            },
+            icon: const Icon(Icons.settings),
+          ),
+        ],
+        // Modify bottom button bar:
+        bottomButtonBar: [
+          const MaterialDesktopSkipPreviousButton(),
+          const MaterialDesktopPlayOrPauseButton(),
+          const MaterialDesktopSkipNextButton(),
+          MaterialDesktopCustomButton(
+              onPressed: () {
+                player.stop();
+                Navigator.pop(context);
+              },
+              icon: const Icon(Icons.stop)),
+          const MaterialDesktopVolumeButton(),
+          const MaterialDesktopPositionIndicator(),
+          const Spacer(),
+          MaterialDesktopCustomButton(
+              onPressed: () {
+                getPosition();
+              },
+              icon: const Icon(Icons.closed_caption_sharp)),
+          MaterialDesktopCustomButton(onPressed: () {}, icon: const Icon(Icons.settings)),
+          const MaterialDesktopFullscreenButton()
+        ],
+      ),
+      fullscreen: const MaterialDesktopVideoControlsThemeData(),
+      child: Scaffold(
+        body: Video(
+          controller: controller,
+        ),
+      ),
+    );
   }
 }

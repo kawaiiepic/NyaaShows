@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:nyaashows/data/data_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class TraktModel with ChangeNotifier {
+class Trakt with ChangeNotifier {
   void auth(
     BuildContext context,
   ) async {
@@ -38,9 +38,7 @@ class TraktModel with ChangeNotifier {
               ));
     }).onError((_, except) async {
       final url = Uri.https('api.trakt.tv', '/oauth/device/code');
-      var response = await http.post(url, body: {
-        'client_id': await rootBundle.loadString('keys/trakt_client_id.key')
-      });
+      var response = await http.post(url, body: {'client_id': await rootBundle.loadString('keys/trakt_client_id.key')});
 
       print(response.body);
       if (response.statusCode == 200 && context.mounted) {
@@ -73,8 +71,7 @@ class TraktModel with ChangeNotifier {
           final url = Uri.https('api.trakt.tv', '/oauth/device/token');
           var response = await http.post(url, body: {
             'code': deviceCode,
-            'client_id':
-                await rootBundle.loadString('keys/trakt_client_id.key'),
+            'client_id': await rootBundle.loadString('keys/trakt_client_id.key'),
             'client_secret': await rootBundle.loadString('keys/traktSecret')
           });
 
@@ -109,8 +106,7 @@ class TraktModel with ChangeNotifier {
 
             if (accessToken.isNotEmpty) // TODO: Check all variables
             {
-              DataManager.traktData.storeToken(accessToken, tokenType,
-                  expiresIn, refreshToken, scope, createdAt);
+              DataManager.traktData.storeToken(accessToken, tokenType, expiresIn, refreshToken, scope, createdAt);
             }
             timer.cancel();
           } else {
@@ -130,19 +126,13 @@ class TraktModel with ChangeNotifier {
                             if (!await launchUrl(
                               Uri.parse(verificationUrl),
                               mode: LaunchMode.platformDefault,
-                              browserConfiguration:
-                                  const BrowserConfiguration(showTitle: true),
+                              browserConfiguration: const BrowserConfiguration(showTitle: true),
                             )) {
                               throw Exception('Could not launch website');
                             }
                           },
                           child: const Text('Trakt Activate Page.')),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text('Code: '),
-                            SelectableText(userCode)
-                          ]),
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Code: '), SelectableText(userCode)]),
                     ],
                   ),
                   actions: <Widget>[
@@ -157,11 +147,6 @@ class TraktModel with ChangeNotifier {
       }
     });
   }
-}
-
-class Trakt with ChangeNotifier {
-
-
 }
 
 Show showFromJson(String str) => Show.fromJson(json.decode(str));
@@ -191,8 +176,7 @@ class Show {
         lastUpdatedAt: DateTime.parse(json["last_updated_at"]),
         resetAt: json["reset_at"],
         show: ShowClass.fromJson(json["show"]),
-        seasons:
-            List<Season>.from(json["seasons"].map((x) => Season.fromJson(x))),
+        seasons: List<Season>.from(json["seasons"].map((x) => Season.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
@@ -216,8 +200,7 @@ class Season {
 
   factory Season.fromJson(Map<String, dynamic> json) => Season(
         number: json["number"],
-        episodes: List<Episode>.from(
-            json["episodes"].map((x) => Episode.fromJson(x))),
+        episodes: List<Episode>.from(json["episodes"].map((x) => Episode.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
@@ -309,6 +292,3 @@ class Ids {
         "tvrage": tvrage,
       };
 }
-
-
-

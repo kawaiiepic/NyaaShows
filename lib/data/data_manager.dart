@@ -5,10 +5,13 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:nyaashows/data/trakt/progress.dart';
+import 'package:nyaashows/data/trakt/show.dart';
 import 'package:nyaashows/main.dart';
-import 'package:nyaashows/trakt.dart';
+import 'package:nyaashows/pages/player.dart';
 import 'package:http/http.dart' as http;
-import 'package:nyaashows/tvdb.dart';
+import 'package:nyaashows/data/tvdb.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -31,7 +34,6 @@ class DataManager {
 }
 
 class TVDB with ChangeNotifier {
-  final Future<String> _token = Future.value("");
   Future<Map<int, Uint8List>> imageData = Future.value({});
 
   void auth() {}
@@ -55,11 +57,7 @@ class TVDB with ChangeNotifier {
       final url = Uri.https('api4.thetvdb.com', '/v4/series/$id/artworks');
       var response = await http.get(
         url,
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${await retrieveToken()}'
-        },
+        headers: {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer ${await retrieveToken()}'},
       );
 
       print(response.statusCode);
@@ -94,10 +92,7 @@ class TVDB with ChangeNotifier {
       final url = Uri.https('api4.thetvdb.com', '/v4/login');
 
       var response = await http.post(url,
-          headers: {
-            'accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
+          headers: {'accept': 'application/json', 'Content-Type': 'application/json'},
           body: jsonEncode({
             'apikey': await rootBundle.loadString('keys/tvdb.key'),
           }));
@@ -123,8 +118,7 @@ class TraktData {
   // List<History> historyData = [];
   Future<List<Show>> showData = Future.value([]);
 
-  void storeToken(String accessToken, String tokenType, int expiresIn,
-      String refreshToken, String scope, int createdAt) async {
+  void storeToken(String accessToken, String tokenType, int expiresIn, String refreshToken, String scope, int createdAt) async {
     final file = await NyaaShows.dataManager.dataFile('user');
 
     Map<String, dynamic> data = {
@@ -244,14 +238,32 @@ class TraktData {
     });
     return Future.value(showData);
   }
+
+  Future<TraktProgress?> showProgress(id) async {
+    TraktProgress? progress;
+    await retriveToken().then((value) async {
+      var url = Uri.https('api.trakt.tv', '/shows/$id/progress/watched');
+      var response = await http.get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $value',
+        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-version': '2'
+      });
+
+      if (response.statusCode == 200) {
+        progress = traktProgressFromJson(response.body);
+      }
+    });
+    return progress;
+  }
 }
 
 class RealDebridAPI {
   late Timer timer;
   late String userCode;
-  Future<bool?> login(BuildContext context) async {
-    final url = Uri.https('api.real-debrid.com', '/oauth/v2/device/code',
-        {'client_id': 'X245A4XAIBGVM', 'new_credentials': 'yes'});
+
+  Future<void> login(BuildContext context) async {
+    final url = Uri.https('api.real-debrid.com', '/oauth/v2/device/code', {'client_id': 'X245A4XAIBGVM', 'new_credentials': 'yes'});
     var response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -283,13 +295,9 @@ class RealDebridAPI {
       this.userCode = userCode;
       var hasAccessToken = false;
 
-      print(
-          'Connect the app with real-debrid at: $verificationUrl with code: [$userCode]');
+      print('Connect the app with real-debrid at: $verificationUrl with code: [$userCode]');
       timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
-        final url = Uri.https(
-            'api.real-debrid.com',
-            '/oauth/v2/device/credentials',
-            {'client_id': 'X245A4XAIBGVM', 'code': deviceCode});
+        final url = Uri.https('api.real-debrid.com', '/oauth/v2/device/credentials', {'client_id': 'X245A4XAIBGVM', 'code': deviceCode});
         var get = await http.get(url);
 
         if (get.statusCode == 200) {
@@ -311,12 +319,8 @@ class RealDebridAPI {
           });
 
           final url = Uri.https('api.real-debrid.com', '/oauth/v2/token');
-          var post = await http.post(url, body: {
-            'client_id': clientId,
-            'client_secret': clientSecret,
-            'code': deviceCode,
-            'grant_type': 'http://oauth.net/grant_type/device/1.0'
-          });
+          var post = await http.post(url,
+              body: {'client_id': clientId, 'client_secret': clientSecret, 'code': deviceCode, 'grant_type': 'http://oauth.net/grant_type/device/1.0'});
 
           print(post.statusCode);
           print(post.body);
@@ -372,7 +376,7 @@ class RealDebridAPI {
   }
 
   void loginPopup(BuildContext context) async {
-    await secret().then((value) async {
+    await accessToken().then((value) async {
       if (context.mounted) {
         if (value != null) {
           return showDialog(
@@ -382,7 +386,7 @@ class RealDebridAPI {
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Username'),
+                        const Text('Username'),
                         TextButton(
                             onPressed: () async {
                               Navigator.pop(context);
@@ -412,19 +416,13 @@ class RealDebridAPI {
                               if (!await launchUrl(
                                 Uri.parse('https://real-debrid.com/device'),
                                 mode: LaunchMode.platformDefault,
-                                browserConfiguration:
-                                    const BrowserConfiguration(showTitle: true),
+                                browserConfiguration: const BrowserConfiguration(showTitle: true),
                               )) {
                                 throw Exception('Could not launch website');
                               }
                             },
                             child: const Text('Activate Page.')),
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('Code: '),
-                              SelectableText(userCode)
-                            ]),
+                        Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Code: '), SelectableText(userCode)]),
                       ],
                     ),
                     actions: <Widget>[
@@ -441,14 +439,142 @@ class RealDebridAPI {
     }).onError((_, except) {});
   }
 
-  Future<Map<String, dynamic>?> secret() async {
+  Future<String?> accessToken() async {
     final file = await NyaaShows.dataManager.dataFile('real-debrid');
-
     if (await file.exists()) {
       Map<String, dynamic> json = jsonDecode(await file.readAsString());
-      return json;
-    } else {
-      return null;
+      return json["access_token"];
     }
+
+    return null;
+  }
+
+  Future<List?> availableHosts() async {
+    final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/availableHosts');
+    var response = await http.get(url, headers: {'Authorization': 'Bearer W2IZWZOKMCTEKZO36JXALP2UXYNQ4QDFZR2YMALEIGYSV2IBD32A'});
+    print(response.body);
+    if (response.statusCode == 200) {
+      List<dynamic> json = jsonDecode(response.body);
+      return json;
+    }
+    return null;
+  }
+
+  Future<Map<dynamic, dynamic>?> addMagnet({required String magnet, required BuildContext context, required TraktProgress progress}) async {
+    if (progress.nextEpisode != null) {
+      await accessToken().then(
+        (value) async {
+          if (value != null) {
+            final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/addMagnet');
+            var response = await http.post(url, headers: {'Authorization': 'Bearer $value'}, body: {'magnet': magnet});
+            if (response.statusCode == 201) {
+              Map<String, dynamic> json = jsonDecode(response.body);
+              var id = json["id"];
+              checkMagnet(id, context, progress);
+            }
+          }
+        },
+      );
+    }
+    return null;
+  }
+
+  Future<void> checkMagnet(String id, BuildContext context, TraktProgress progress) async {
+    if (context.mounted) {
+      await accessToken().then((value) async {
+        final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/info/$id');
+        var get = await http.get(url, headers: {'Authorization': 'Bearer $value'});
+        Map<String, dynamic> decode = jsonDecode(get.body);
+
+        print(decode);
+
+        switch (decode['status']) {
+          case 'waiting_files_selection':
+            await selectFiles(id, decode, context, progress);
+            print('awaiting selection');
+            break;
+          case 'downloaded':
+            var link = (decode['links'] as List<dynamic>).first;
+            unrestrickLink(link: link, context: context);
+            print('Downloaded!!!');
+            break;
+          case 'queued':
+            timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+              final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/info/$id');
+              var get = await http.get(url, headers: {'Authorization': 'Bearer $value'});
+              Map<String, dynamic> status = jsonDecode(get.body);
+              print('Still waiitng');
+              if (status['status'] == 'downloaded') {
+                print("Finished Downloading");
+                var link = (decode['links'] as List<dynamic>).first;
+                unrestrickLink(link: link, context: context);
+                timer.cancel();
+              }
+            });
+        }
+
+        // print(decode);
+      });
+    }
+  }
+
+  Future<void> checkTorrents() async {
+    accessToken().then((value) async {
+      final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents');
+      var get = await http.get(url, headers: {'Authorization': 'Bearer $value'});
+      print(get.statusCode);
+      print(get.body);
+    });
+  }
+
+  Future<void> selectFiles(String id, Map<String, dynamic> json, BuildContext context, TraktProgress progress) async {
+    await accessToken().then((value) async {
+      List<dynamic> files = json["files"];
+      List<int> ids = [];
+
+      String season = progress.nextEpisode!.season.toString();
+      String episode = progress.nextEpisode!.number.toString();
+      String episodeName = progress.nextEpisode!.title;
+
+      for (var file in files) {
+        var id0 = file["id"];
+        String path = file["path"];
+        var bytes = file["bytes"];
+        var selected = file["selected"];
+        if (path.contains(RegExp(r'^.*\.(mp4|mkv|wmv|avi)$'))) {
+          //TODO: Check if it's the right episode.
+          if (path.contains(season) && path.contains(episode)) {
+            ids.add(id0);
+            print(path);
+          }
+        }
+      }
+
+      final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/selectFiles/$id');
+      var post = await http.post(url, headers: {'Authorization': 'Bearer $value'}, body: {'files': ids.join(',')});
+      print(ids.join(','));
+      print(post.body);
+      if (post.statusCode == 204) {
+        // checkTorrents();
+        checkMagnet(id, context, progress);
+      }
+    });
+  }
+
+  Future<Map<String, dynamic>?> unrestrickLink({required String link, required BuildContext context}) async {
+    accessToken().then((value) async {
+      final url = Uri.https('api.real-debrid.com', '/rest/1.0/unrestrict/link');
+      var post = await http.post(url, headers: {'Authorization': 'Bearer $value'}, body: {'link': link});
+
+      if (post.statusCode == 200) {
+        Map<String, dynamic> json = jsonDecode(post.body);
+        print(json);
+        String video = json["download"];
+        Navigator.push(context, MaterialPageRoute(builder: (context) => VideoPlayer(media: Media(video))));
+        return json;
+      }
+    });
+
+    return null;
   }
 }

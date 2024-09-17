@@ -40,11 +40,16 @@ dependencies:
   url_launcher: ^6.3.0
   flutter_web_auth_2: ^3.1.2
   path_provider: ^2.1.4
-  media_kit: ^1.1.11
-  media_kit_video: ^0.0.4
-  media_kit_libs_video: ^1.0.5
-  media_kit_libs_linux: ^1.1.3
   html_parser_plus: ^0.1.4
+  media_kit: ^1.1.11 # Primary package.
+  media_kit_video: ^1.2.5 # For video rendering.
+  media_kit_libs_video: ^1.0.5 # Native video dependencies.
+  video_player_media_kit: ^1.0.5
+  media_kit_libs_android_video: any
+  media_kit_libs_ios_video: any
+  media_kit_libs_macos_video: any
+  media_kit_libs_windows_video: any
+  media_kit_libs_linux: any
 
 dev_dependencies:
   flutter_test:

@@ -479,7 +479,7 @@ class RealDebridAPI {
     return null;
   }
 
-  Future<void> checkMagnet(String id, BuildContext context, TraktProgress progress) async {
+  Future<void> checkMagnet(String id, BuildContext context, {}) async {
     if (context.mounted) {
       await accessToken().then((value) async {
         final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/info/$id');
@@ -490,7 +490,7 @@ class RealDebridAPI {
 
         switch (decode['status']) {
           case 'waiting_files_selection':
-            await selectFiles(id, decode, context, progress);
+            await selectFiles(id, decode, context);
             print('awaiting selection');
             break;
           case 'downloaded':
@@ -527,7 +527,7 @@ class RealDebridAPI {
     });
   }
 
-  Future<void> selectFiles(String id, Map<String, dynamic> json, BuildContext context, TraktProgress progress) async {
+  Future<void> selectFiles(String id, Map<String, dynamic> json, BuildContext context) async {
     await accessToken().then((value) async {
       List<dynamic> files = json["files"];
       List<int> ids = [];

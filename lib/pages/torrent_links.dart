@@ -5,10 +5,10 @@ import 'package:nyaashows/main.dart';
 import 'package:nyaashows/torrents/tpb.dart';
 
 class TorrentLinks extends StatelessWidget {
-  const TorrentLinks({super.key, required this.show, required this.progress});
+  const TorrentLinks({super.key, required this.show, required this.seasonName});
 
   final Show show;
-  final TraktProgress progress;
+  final String seasonName;
 
   @override
   Widget build(BuildContext context) {

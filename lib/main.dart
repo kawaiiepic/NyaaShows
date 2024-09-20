@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nyaashows/data/data_manager.dart';
-import 'package:nyaashows/data/trakt/show.dart';
+import 'package:nyaashows/trakt/trakt.dart';
 import 'package:nyaashows/utils/locale_fix.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'pages/scaffold.dart' as scaffold;

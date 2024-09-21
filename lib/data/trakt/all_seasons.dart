@@ -66,7 +66,6 @@ class Season {
   });
 
   factory Season.fromJson(var json) {
-    print(json);
     return Season(
       number: json["number"],
       // ids: Ids.fromJson(json["ids"]),
@@ -76,7 +75,7 @@ class Season {
       episodeCount: json["episode_count"],
       airedEpisodes: json["aired_episodes"],
       title: json["title"],
-      overview: 'Overview',
+      overview: json["overview"],
       firstAired: DateTime.parse(json["first_aired"]),
       updatedAt: json["udpated_at"],
       network: json["network"],

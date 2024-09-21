@@ -1,54 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:nyaashows/data/trakt/progress.dart';
-import 'package:nyaashows/data/trakt/show.dart';
 import 'package:nyaashows/main.dart';
+import 'package:nyaashows/pages/episodes_page.dart';
 import 'package:nyaashows/torrents/tpb.dart';
 
 class TorrentLinks extends StatelessWidget {
-  const TorrentLinks({super.key, required this.show, required this.seasonName});
+  const TorrentLinks({super.key, required this.torrentEpisode});
 
-  final Show show;
-  final String seasonName;
+  final TorrentEpisode torrentEpisode;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: const Text("Torrents")),
         body: FutureBuilder<List<TPB>>(
-            future: ThePirateBay.torrent(show: show, progress: progress),
+            future: ThePirateBay.torrent(torrentEpisode: torrentEpisode),
             builder: (context, snapshot) {
               Widget child;
 
               if (snapshot.hasData) {
-                var validList = [];
-                for (TPB e in snapshot.data!) {
-                  print(e.title);
-                  if (progress.nextEpisode != null) {
-                    var nextEpisode = progress.nextEpisode!;
-                    var result = [nextEpisode.season.toString()].every(e.title.contains);
-                    if (result) {
-                      print(nextEpisode.number.toString());
-                      validList.add(e);
-                    }
-
-                    // if (validList.isEmpty) {
-                    //   validList = snapshot.data!;
-                    // }
-                  }
-                }
                 child = ListView.builder(
-                    itemCount: validList.length,
+                    itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       return Container(
                         alignment: Alignment.center,
                         height: 50,
                         child: TextButton(
                             onPressed: () async {
-                              await NyaaShows.realDebrid.addMagnet(magnet: validList[index].magnet, context: context, progress: progress);
-                              // NyaaShows.realDebrid.checkTorrents();
+                              NyaaShows.realDebrid.addMagnet(magnet: snapshot.data![index].magnet, context: context, torrentEpisode: torrentEpisode);
                             },
                             child: Text(
-                              validList[index].title,
+                              snapshot.data![index].title,
                               textAlign: TextAlign.center,
                             )),
                       );

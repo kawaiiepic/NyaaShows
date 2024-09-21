@@ -7,11 +7,18 @@ import 'package:http/http.dart' as http;
 import 'package:nyaashows/data/data_manager.dart';
 import 'package:nyaashows/data/trakt/all_seasons.dart';
 import 'package:nyaashows/data/trakt/episodes_from_season.dart';
+import 'package:nyaashows/data/trakt/profile.dart';
+// import 'package:nyaashows/data/trakt/show.dart';
 import 'package:nyaashows/data/trakt/single_episode.dart';
+import 'package:nyaashows/data/trakt/single_season.dart';
+import 'package:nyaashows/data/trakt/watched.dart';
+import 'package:nyaashows/data/trakt/watched_progress.dart' as watched_progress;
 import 'package:nyaashows/main.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Trakt with ChangeNotifier {
+  List<CombinedShow> _nextUpFuture = [];
+
   void auth(
     BuildContext context,
   ) async {
@@ -24,7 +31,7 @@ class Trakt with ChangeNotifier {
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('@${traktData.displayName}'),
+                    Text('@Placeholder'),
                     TextButton(
                         onPressed: () async {
                           Navigator.pop(context);
@@ -163,8 +170,6 @@ class Trakt with ChangeNotifier {
         'trakt-api-version': '2'
       });
 
-      // print(response.body);
-
       if (response.statusCode == 200) {
         List<Season> seasons = seasonFromJson(response.body);
         return seasons;
@@ -177,7 +182,6 @@ class Trakt with ChangeNotifier {
 
   Future<List<EpisodesFromSeason>> episodesFromSeason({required id, required season}) async {
     return accessToken().then((token) async {
-      print(season);
       final url = Uri.https('api.trakt.tv', '/shows/$id/seasons/$season');
       final response = await http.get(url, headers: {
         'Content-type': 'application/json',
@@ -214,6 +218,114 @@ class Trakt with ChangeNotifier {
     return singleEpisode;
   }
 
+  Future<SingleSeason?> seasonFromNumber({required show, required season}) async {
+    //TODO: Save episode images and data.
+    return accessToken().then((value) async {
+      final url = Uri.https('api.trakt.tv', '/shows/$show/seasons/$season/info', {'extended': 'full'});
+      final response = await http.get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $value',
+        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-version': '2'
+      });
+
+      print(response.statusCode);
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        var singleSeason = singleSeasonFromJson(response.body);
+        return singleSeason;
+      } else {
+        return null;
+      }
+    });
+  }
+
+  Future<List<CombinedShow>?> nextUp({page = 0, forceReload = false}) async {
+    if (_nextUpFuture.isEmpty || forceReload) {
+      return _nextUp(page: page).then((shows) {
+        if (shows != null) {
+          _nextUpFuture = shows;
+          return _nextUpFuture;
+        } else {
+          return null;
+        }
+      });
+    } else {
+      return _nextUpFuture;
+    }
+  }
+
+  Future<List<CombinedShow>?> _nextUp({page = 0}) async { //TODO: Implement Hidden Shows. https://trakt.docs.apiary.io/#reference/users/hidden-items/get-hidden-items
+    return accessToken().then((token) async {
+      NyaaShows.log('[Next Up]');
+      var url = Uri.https('api.trakt.tv', '/sync/watched/shows', {'extended': 'noseasons'});
+      var response = await http.get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-version': '2'
+      });
+
+      if (response.statusCode == 200) {
+        var watched = watchedFromJson(response.body);
+
+        List<CombinedShow> shows = [];
+
+        var startInt = 10 * page; // 1st page (0-9), 2nd page (10-19)
+        var endInt = startInt + 9;
+        var currentInt = 0;
+
+        for (var show in watched) {
+          var traktId = show.show.ids.trakt;
+
+          var url2 = Uri.https('api.trakt.tv', '/shows/$traktId/progress/watched');
+          var response2 = await http.get(url2, headers: {
+            'Content-type': 'application/json',
+            'Authorization': 'Bearer $token',
+            'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+            'trakt-api-version': '2'
+          });
+
+          if (response2.statusCode == 200) {
+            var watchedProgress = watched_progress.watchedProgressFromJson(response2.body);
+            if (watchedProgress.aired != watchedProgress.completed && watchedProgress.nextEpisode != null) {
+              if (currentInt >= startInt && currentInt <= endInt) {
+                shows.add(CombinedShow(show: show.show, watchedProgress: watchedProgress));
+                NyaaShows.log(
+                'In-Progress: ${show.show.title} | Next Up: ${watchedProgress.nextEpisode!.title} - ${watchedProgress.nextEpisode!.season}:${watchedProgress.nextEpisode!.number}');
+              } else if (currentInt > endInt) {
+                break;
+              }
+              currentInt++;
+            }
+          }
+        }
+        return shows;
+      } else {
+        return null;
+      }
+    });
+  }
+
+  Future<Profile?> userData() async {
+    return accessToken().then((value) async {
+      var url = Uri.https('api.trakt.tv', '/users/me', {'extended': 'full'});
+      var response = await http.get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $value',
+        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-version': '2'
+      });
+
+      if (response.statusCode == 200) {
+        return profileFromJson(response.body);
+      } else {
+        return null;
+      }
+    });
+  }
+
   Future<String> accessToken() async {
     final file = await NyaaShows.dataManager.dataFile('user');
 
@@ -233,4 +345,11 @@ class Trakt with ChangeNotifier {
       return await val;
     });
   }
+}
+
+class CombinedShow {
+  watched_progress.WatchedProgress watchedProgress;
+  Show show;
+
+  CombinedShow({required this.show, required this.watchedProgress});
 }

@@ -1,11 +1,10 @@
 import 'package:html_parser_plus/html_parser_plus.dart';
 import 'package:http/http.dart' as http;
-import 'package:nyaashows/data/trakt/progress.dart';
-import 'package:nyaashows/data/trakt/show.dart';
+import 'package:nyaashows/pages/episodes_page.dart';
 
 class ThePirateBay {
-  static Future<List<TPB>> torrent({tvshows = true, required Show show, required TraktProgress progress}) async {
-    final response = await http.get(Uri.parse('https://1.piratebays.to/s/?q=${show.show.title.replaceAll(' ', '+')}'));
+  static Future<List<TPB>> torrent({tvshows = true, required TorrentEpisode torrentEpisode}) async {
+    final response = await http.get(Uri.parse('https://1.piratebays.to/s/?q=${torrentEpisode.showName.replaceAll(' ', '+')}'));
 
     if (response.statusCode == 200) {
       var htmlString = response.body;
@@ -13,6 +12,7 @@ class ThePirateBay {
       var node = parser.parse(htmlString);
 
       var parse = parser.queryNodes(node, '//tr');
+      print(torrentEpisode.showName.replaceAll(' ', '+'));
 
       List<TPB> torrents = [];
       for (var p in parse) {
@@ -25,8 +25,8 @@ class ThePirateBay {
         var uploader = parser.query(p, '//td[8]/@align/@text|dart.replace(\n ,)');
         var magnet = parser.query(p, '//td/nobr/a/@href');
         var tpb = TPB(title: title, uploadedDate: uploadedDate, size: size, seeders: seeders, leechers: leechers, uploader: uploader, magnet: magnet);
-
-        if (tvshows && type.contains('TV shows')) {
+        // print('Title: $title | Type: $type');
+        if (tvshows) {
           torrents.add(tpb);
         } else if (!tvshows && type.contains('Movies')) {
           torrents.add(tpb);

@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:nyaashows/data/trakt/profile.dart';
 import 'package:nyaashows/data/trakt/progress.dart';
 import 'package:nyaashows/data/trakt/show.dart';
 import 'package:nyaashows/main.dart';
+import 'package:nyaashows/pages/episodes_page.dart';
 import 'package:nyaashows/pages/player.dart';
 import 'package:http/http.dart' as http;
 import 'package:nyaashows/data/tvdb.dart';
@@ -22,14 +24,6 @@ class DataManager {
   Future<File> dataFile(String name) async {
     final directory = await getApplicationSupportDirectory();
     return File('${directory.path}/$name.json');
-  }
-
-  void checkData() {
-    if (true) {
-      //TODO: Check the last time we've updated Trakt data. (1 day perferable).
-      DataManager.traktData.userData();
-      DataManager.tvdbData.retrieveToken();
-    }
   }
 }
 
@@ -59,8 +53,6 @@ class TVDB with ChangeNotifier {
         url,
         headers: {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer ${await retrieveToken()}'},
       );
-
-      print(response.statusCode);
 
       if (response.statusCode == 200) {
         var artwork = TvdbArtwork.fromJson(jsonDecode(response.body));
@@ -110,12 +102,6 @@ class TVDB with ChangeNotifier {
 }
 
 class TraktData {
-  String username = "";
-  String displayName = "";
-  bool vip = false;
-  String profilePicture = "";
-
-  // List<History> historyData = [];
   Future<List<Show>> showData = Future.value([]);
 
   void storeToken(String accessToken, String tokenType, int expiresIn, String refreshToken, String scope, int createdAt) async {
@@ -146,35 +132,12 @@ class TraktData {
       Map<String, dynamic> json = jsonDecode(await file.readAsString());
       Future<String> val = Future<String>.value("");
       json.forEach((key, value) async {
-        // developer.log('Key: $key, Value: $value');
         if (key == "access_token") {
           val = Future.value(value as String);
-          // print("Access Token exists!");
-          // print(value);
         }
       });
 
       return await val;
-    });
-  }
-
-  void userData() async {
-    retriveToken().then((value) async {
-      var url = Uri.https('api.trakt.tv', '/users/me', {'extended': 'full'});
-      var response = await http.get(url, headers: {
-        'Content-type': 'application/json',
-        'Authorization': 'Bearer $value',
-        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
-        'trakt-api-version': '2'
-      });
-
-      if (response.statusCode == 200) {
-        Map<String, dynamic> json = jsonDecode(response.body);
-        username = json["username"];
-        displayName = json["name"];
-        vip = json["vip"];
-        profilePicture = json["images"]["avatar"]["full"];
-      }
     });
   }
 
@@ -186,16 +149,11 @@ class TraktData {
     final file = await NyaaShows.dataManager.dataFile('shows');
 
     return file.exists().then((value) async {
-      // developer.debugger(message: 'File exists');
       List<dynamic> json = jsonDecode(await file.readAsString());
       List<Show> shows = [];
-
-      // showData.clear();
       int count = 0;
       for (Map<String, dynamic> json in json) {
         Show show = Show.fromJson(json);
-        // var show = showFromJson(json.toString());
-        // print('Show: ${show.show.ids.tmdb}');
         if (count >= 10) {
           continue;
         } else {
@@ -210,8 +168,6 @@ class TraktData {
 
       return await showData;
     }).onError((error, ex) {
-      // print(ex.toString());
-      // return Future.value(List.empty());
       return fetchShows();
     });
   }
@@ -295,13 +251,12 @@ class RealDebridAPI {
       this.userCode = userCode;
       var hasAccessToken = false;
 
-      print('Connect the app with real-debrid at: $verificationUrl with code: [$userCode]');
+      NyaaShows.log('Connect the app with real-debrid at: $verificationUrl with code: [$userCode]');
       timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
         final url = Uri.https('api.real-debrid.com', '/oauth/v2/device/credentials', {'client_id': 'X245A4XAIBGVM', 'code': deviceCode});
         var get = await http.get(url);
 
         if (get.statusCode == 200) {
-          print('clientId and clientSecret');
           Map json = jsonDecode(get.body);
 
           String clientId = "";
@@ -321,9 +276,6 @@ class RealDebridAPI {
           final url = Uri.https('api.real-debrid.com', '/oauth/v2/token');
           var post = await http.post(url,
               body: {'client_id': clientId, 'client_secret': clientSecret, 'code': deviceCode, 'grant_type': 'http://oauth.net/grant_type/device/1.0'});
-
-          print(post.statusCode);
-          print(post.body);
 
           if (post.statusCode == 200) {
             hasAccessToken = true;
@@ -369,7 +321,7 @@ class RealDebridAPI {
             timer.cancel();
           }
         } else {
-          print('Still waiting for access code');
+          NyaaShows.log('Still waiting for access code');
         }
       });
     }
@@ -443,7 +395,7 @@ class RealDebridAPI {
     final file = await NyaaShows.dataManager.dataFile('real-debrid');
     if (await file.exists()) {
       Map<String, dynamic> json = jsonDecode(await file.readAsString());
-      return json["access_token"];
+      return json['access_token'];
     }
 
     return null;
@@ -452,7 +404,6 @@ class RealDebridAPI {
   Future<List?> availableHosts() async {
     final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/availableHosts');
     var response = await http.get(url, headers: {'Authorization': 'Bearer W2IZWZOKMCTEKZO36JXALP2UXYNQ4QDFZR2YMALEIGYSV2IBD32A'});
-    print(response.body);
     if (response.statusCode == 200) {
       List<dynamic> json = jsonDecode(response.body);
       return json;
@@ -460,42 +411,42 @@ class RealDebridAPI {
     return null;
   }
 
-  Future<Map<dynamic, dynamic>?> addMagnet({required String magnet, required BuildContext context, required TraktProgress progress}) async {
-    if (progress.nextEpisode != null) {
-      await accessToken().then(
-        (value) async {
-          if (value != null) {
-            final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/addMagnet');
-            var response = await http.post(url, headers: {'Authorization': 'Bearer $value'}, body: {'magnet': magnet});
-            if (response.statusCode == 201) {
-              Map<String, dynamic> json = jsonDecode(response.body);
-              var id = json["id"];
-              checkMagnet(id, context, progress);
-            }
+  Future<Map<dynamic, dynamic>?> addMagnet({required String magnet, required BuildContext context, required TorrentEpisode torrentEpisode}) async {
+    await accessToken().then(
+      (value) async {
+        if (value != null) {
+          final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/addMagnet');
+          var response = await http.post(url, headers: {'Authorization': 'Bearer $value'}, body: {'magnet': magnet});
+
+          if (response.statusCode == 201) {
+            developer.log('addMagnet');
+            Map<String, dynamic> json = jsonDecode(response.body);
+            var id = json["id"];
+            checkMagnet(id, context, torrentEpisode: torrentEpisode);
+          } else if (response.statusCode == 401) {
+            developer.log('Access Token expired!');
           }
-        },
-      );
-    }
+        }
+      },
+    );
     return null;
   }
 
-  Future<void> checkMagnet(String id, BuildContext context, {}) async {
+  Future<void> checkMagnet(String id, BuildContext context, {required TorrentEpisode torrentEpisode}) async {
     if (context.mounted) {
       await accessToken().then((value) async {
         final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/info/$id');
         var get = await http.get(url, headers: {'Authorization': 'Bearer $value'});
         Map<String, dynamic> decode = jsonDecode(get.body);
 
-        print(decode);
-
         switch (decode['status']) {
           case 'waiting_files_selection':
-            await selectFiles(id, decode, context);
+            await selectFiles(id, decode, context, torrentEpisode: torrentEpisode);
             print('awaiting selection');
             break;
           case 'downloaded':
             var link = (decode['links'] as List<dynamic>).first;
-            unrestrickLink(link: link, context: context);
+            unrestrickLink(link: link, context: context, torrentEpisode: torrentEpisode);
             print('Downloaded!!!');
             break;
           case 'queued':
@@ -504,10 +455,11 @@ class RealDebridAPI {
               var get = await http.get(url, headers: {'Authorization': 'Bearer $value'});
               Map<String, dynamic> status = jsonDecode(get.body);
               print('Still waiitng');
+              NyaaShows.log(status.toString());
               if (status['status'] == 'downloaded') {
                 print("Finished Downloading");
                 var link = (decode['links'] as List<dynamic>).first;
-                unrestrickLink(link: link, context: context);
+                unrestrickLink(link: link, context: context, torrentEpisode: torrentEpisode);
                 timer.cancel();
               }
             });
@@ -527,14 +479,14 @@ class RealDebridAPI {
     });
   }
 
-  Future<void> selectFiles(String id, Map<String, dynamic> json, BuildContext context) async {
+  Future<void> selectFiles(String id, Map<String, dynamic> json, BuildContext context, {required TorrentEpisode torrentEpisode}) async {
     await accessToken().then((value) async {
       List<dynamic> files = json["files"];
       List<int> ids = [];
 
-      String season = progress.nextEpisode!.season.toString();
-      String episode = progress.nextEpisode!.number.toString();
-      String episodeName = progress.nextEpisode!.title;
+      // String season = progress.nextEpisode!.season.toString();
+      // String episode = progress.nextEpisode!.number.toString();
+      // String episodeName = progress.nextEpisode!.title;
 
       for (var file in files) {
         var id0 = file["id"];
@@ -543,10 +495,20 @@ class RealDebridAPI {
         var selected = file["selected"];
         if (path.contains(RegExp(r'^.*\.(mp4|mkv|wmv|avi)$'))) {
           //TODO: Check if it's the right episode.
-          if (path.contains(season) && path.contains(episode)) {
-            ids.add(id0);
-            print(path);
+          var seaNum = torrentEpisode.seasonId;
+          var epNum = torrentEpisode.episodeId;
+          NyaaShows.log('Trying RegExp: $path');
+          if (path.contains(RegExp('s([0]$seaNum|$seaNum)', caseSensitive: false))) {
+            NyaaShows.log('Season entry got');
+            if (path.contains(RegExp('e([0]$seaNum|$seaNum)', caseSensitive: false))) {
+              NyaaShows.log('Episode entry got');
+              ids.add(id0);
+            }
           }
+          // if (path.contains(torrentEpisode.seasonName) && path.contains(torrentEpisode.episodeName)) {
+          //   ids.add(id0);
+          //   print(path);
+          // }
         }
       }
 
@@ -556,12 +518,12 @@ class RealDebridAPI {
       print(post.body);
       if (post.statusCode == 204) {
         // checkTorrents();
-        checkMagnet(id, context, progress);
+        checkMagnet(id, context, torrentEpisode: torrentEpisode);
       }
     });
   }
 
-  Future<Map<String, dynamic>?> unrestrickLink({required String link, required BuildContext context}) async {
+  Future<Map<String, dynamic>?> unrestrickLink({required String link, required BuildContext context, required TorrentEpisode torrentEpisode}) async {
     accessToken().then((value) async {
       final url = Uri.https('api.real-debrid.com', '/rest/1.0/unrestrict/link');
       var post = await http.post(url, headers: {'Authorization': 'Bearer $value'}, body: {'link': link});
@@ -570,7 +532,14 @@ class RealDebridAPI {
         Map<String, dynamic> json = jsonDecode(post.body);
         print(json);
         String video = json["download"];
-        Navigator.push(context, MaterialPageRoute(builder: (context) => VideoPlayer(media: Media(video))));
+
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => VideoPlayer(
+                      media: Media(video),
+                      torrentEpisode: torrentEpisode,
+                    )));
         return json;
       }
     });

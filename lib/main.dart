@@ -4,11 +4,16 @@ import 'package:nyaashows/trakt/trakt.dart';
 import 'package:nyaashows/utils/locale_fix.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'pages/scaffold.dart' as scaffold;
+import 'dart:developer' as developer;
 
 class NyaaShows {
   static Trakt trakt = Trakt();
   static DataManager dataManager = DataManager();
   static RealDebridAPI realDebrid = RealDebridAPI();
+
+  static void log(String message) {
+    developer.log(message);
+  }
 }
 
 void main() async {
@@ -23,7 +28,7 @@ void main() async {
 
   runApp(const NyaaApp());
 
-  NyaaShows.dataManager.checkData();
+  NyaaShows.trakt.nextUp();
 }
 
 class NyaaApp extends StatelessWidget {

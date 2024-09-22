@@ -6,6 +6,7 @@ import 'package:nyaashows/data/trakt/watched.dart';
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/pages/episodes_page.dart';
 import 'package:nyaashows/pages/torrent_links.dart';
+import 'package:nyaashows/torrents/helper.dart';
 import 'package:nyaashows/trakt/trakt.dart';
 
 class SecondRoute extends StatelessWidget {
@@ -50,7 +51,7 @@ class SecondRoute extends StatelessWidget {
             future: DataManager.traktData.showProgress(combinedShow.show.ids.trakt),
             builder: (context, snapshot) {
               Widget child;
-
+              print(combinedShow.show.ids.tvdb);
               if (snapshot.hasData) {
                 final id = combinedShow.show.ids.trakt;
                 Widget child2;
@@ -62,15 +63,25 @@ class SecondRoute extends StatelessWidget {
                       child2 = Column(
                         children: [
                           const Text('Next Up:'),
-                          TextButton(onPressed: () {
-                            Navigator.pushReplacement(
+                          TextButton(
+                              onPressed: () {
+                                Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) => TorrentLinks(
-                                              torrentEpisode: TorrentEpisode(showName: combinedShow.show.title, seasonId: combinedShow.watchedProgress.nextEpisode!.season, episodeId: combinedShow.watchedProgress.nextEpisode!.number, episodeName: combinedShow.watchedProgress.nextEpisode!.title, seasonName: ''),
+                                              torrentEpisode: TorrentEpisode(
+                                                  showName: combinedShow.show.title,
+                                                  seasonId: combinedShow.watchedProgress.nextEpisode!.season,
+                                                  episodeId: combinedShow.watchedProgress.nextEpisode!.number,
+                                                  episodeName: combinedShow.watchedProgress.nextEpisode!.title,
+                                                  seasonName: '',
+                                                  showYear: combinedShow.show.year,
+                                                  episodeYear: 1,
+                                                  tvdb: combinedShow.show.ids.tvdb!),
                                             )));
-
-                          }, child: Text('S${combinedShow.watchedProgress.nextEpisode?.season}:E${combinedShow.watchedProgress.nextEpisode?.number} - ${combinedShow.watchedProgress.nextEpisode?.title}')),
+                              },
+                              child: Text(
+                                  'S${combinedShow.watchedProgress.nextEpisode?.season}:E${combinedShow.watchedProgress.nextEpisode?.number} - ${combinedShow.watchedProgress.nextEpisode?.title}')),
                           const Text('Seasons:'),
                           Expanded(child: listBuilder(seasons))
                         ],

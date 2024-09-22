@@ -1,6 +1,9 @@
+import 'package:discord_rpc/discord_rpc.dart';
 import 'package:flutter/material.dart';
 import 'package:nyaashows/data/data_manager.dart';
+import 'package:nyaashows/discord/discord.dart';
 import 'package:nyaashows/trakt/trakt.dart';
+import 'package:nyaashows/tvdb/tvdb.dart';
 import 'package:nyaashows/utils/locale_fix.dart';
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'pages/scaffold.dart' as scaffold;
@@ -10,6 +13,8 @@ class NyaaShows {
   static Trakt trakt = Trakt();
   static DataManager dataManager = DataManager();
   static RealDebridAPI realDebrid = RealDebridAPI();
+  static Discord discord = Discord();
+  static TVDB tvdb = TVDB();
 
   static void log(String message) {
     developer.log(message);
@@ -26,9 +31,11 @@ void main() async {
     linux: true, // default: false    -    dependency: media_kit_libs_linux
   );
 
+  DiscordRPC.initialize();
+  NyaaShows.discord.start();
   runApp(const NyaaApp());
 
-  NyaaShows.trakt.nextUp();
+  NyaaShows.tvdb.showIcon(350123);
 }
 
 class NyaaApp extends StatelessWidget {

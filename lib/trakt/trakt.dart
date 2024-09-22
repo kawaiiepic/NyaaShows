@@ -8,7 +8,6 @@ import 'package:nyaashows/data/data_manager.dart';
 import 'package:nyaashows/data/trakt/all_seasons.dart';
 import 'package:nyaashows/data/trakt/episodes_from_season.dart';
 import 'package:nyaashows/data/trakt/profile.dart';
-// import 'package:nyaashows/data/trakt/show.dart';
 import 'package:nyaashows/data/trakt/single_episode.dart';
 import 'package:nyaashows/data/trakt/single_season.dart';
 import 'package:nyaashows/data/trakt/watched.dart';
@@ -16,7 +15,7 @@ import 'package:nyaashows/data/trakt/watched_progress.dart' as watched_progress;
 import 'package:nyaashows/main.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Trakt with ChangeNotifier {
+class Trakt {
   List<CombinedShow> _nextUpFuture = [];
 
   void auth(
@@ -203,7 +202,7 @@ class Trakt with ChangeNotifier {
     //TODO: Save episode images and data.
     late final SingleEpisode singleEpisode;
     await accessToken().then((value) async {
-      final url = Uri.https('api.trakt.tv', '/shows/$show/seasons/$season/episodes/$episode');
+      final url = Uri.https('api.trakt.tv', '/shows/$show/seasons/$season/episodes/$episode', {'extended': 'full'});
       final response = await http.get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $value',
@@ -212,6 +211,7 @@ class Trakt with ChangeNotifier {
       });
 
       if (response.statusCode == 200) {
+        print(response.body);
         singleEpisode = singleEpisodeFromJson(response.body);
       }
     });
@@ -256,7 +256,8 @@ class Trakt with ChangeNotifier {
     }
   }
 
-  Future<List<CombinedShow>?> _nextUp({page = 0}) async { //TODO: Implement Hidden Shows. https://trakt.docs.apiary.io/#reference/users/hidden-items/get-hidden-items
+  Future<List<CombinedShow>?> _nextUp({page = 0}) async {
+    //TODO: Implement Hidden Shows. https://trakt.docs.apiary.io/#reference/users/hidden-items/get-hidden-items
     return accessToken().then((token) async {
       NyaaShows.log('[Next Up]');
       var url = Uri.https('api.trakt.tv', '/sync/watched/shows', {'extended': 'noseasons'});
@@ -293,7 +294,7 @@ class Trakt with ChangeNotifier {
               if (currentInt >= startInt && currentInt <= endInt) {
                 shows.add(CombinedShow(show: show.show, watchedProgress: watchedProgress));
                 NyaaShows.log(
-                'In-Progress: ${show.show.title} | Next Up: ${watchedProgress.nextEpisode!.title} - ${watchedProgress.nextEpisode!.season}:${watchedProgress.nextEpisode!.number}');
+                    'In-Progress: ${show.show.title} | Next Up: ${watchedProgress.nextEpisode!.title} - ${watchedProgress.nextEpisode!.season}:${watchedProgress.nextEpisode!.number}');
               } else if (currentInt > endInt) {
                 break;
               }

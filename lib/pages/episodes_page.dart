@@ -4,6 +4,7 @@ import 'package:nyaashows/data/trakt/episodes_from_season.dart';
 import 'package:nyaashows/data/trakt/watched.dart';
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/pages/torrent_links.dart';
+import 'package:nyaashows/torrents/helper.dart';
 
 class EpisodesPage extends StatelessWidget {
   const EpisodesPage({super.key, required this.show, required this.season});
@@ -29,12 +30,22 @@ class EpisodesPage extends StatelessWidget {
                       child: Center(
                         child: TextButton(
                             onPressed: () {
-                              Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => TorrentLinks(
-                                            torrentEpisode: TorrentEpisode(showName: show.title, seasonId: snapshot.data![index].season, episodeId: snapshot.data![index].number, episodeName: snapshot.data![index].title, seasonName: season.title),
-                                          )));
+                              NyaaShows.trakt.episodeFromNumber(show: show.ids.trakt, season: snapshot.data![index].season, episode: snapshot.data![index].number).then((episode) {
+                                 Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => TorrentLinks(
+                                              torrentEpisode: TorrentEpisode(
+                                                  showName: show.title,
+                                                  seasonId: snapshot.data![index].season,
+                                                  episodeId: snapshot.data![index].number,
+                                                  episodeName: snapshot.data![index].title,
+                                                  seasonName: season.title,
+                                                  showYear: show.year,
+                                                  episodeYear: episode.firstAired.year,
+                                                  tvdb: snapshot.data![index].ids.tvdb!),
+                                            )));
+                              });
                             },
                             child: Text('S${snapshot.data![index].season}:E${snapshot.data![index].number} - ${snapshot.data![index].title}')),
                       ));
@@ -61,16 +72,4 @@ class EpisodesPage extends StatelessWidget {
       ),
     );
   }
-}
-
-class TorrentEpisode {
-  int seasonId;
-  int episodeId;
-
-  String showName;
-  String episodeName;
-  String seasonName;
-
-  TorrentEpisode({required this.showName, required this.seasonId, required this.episodeId, required this.episodeName, required this.seasonName});
-  // TorrentEpisode({required this.season, required this.show, required this.episodeName});
 }

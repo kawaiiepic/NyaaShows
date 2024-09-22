@@ -14,90 +14,16 @@ import 'package:nyaashows/pages/episodes_page.dart';
 import 'package:nyaashows/pages/player.dart';
 import 'package:http/http.dart' as http;
 import 'package:nyaashows/data/tvdb.dart';
+import 'package:nyaashows/torrents/helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DataManager {
   static TraktData traktData = TraktData();
-  static TVDB tvdbData = TVDB();
 
   Future<File> dataFile(String name) async {
     final directory = await getApplicationSupportDirectory();
     return File('${directory.path}/$name.json');
-  }
-}
-
-class TVDB with ChangeNotifier {
-  Future<Map<int, Uint8List>> imageData = Future.value({});
-
-  void auth() {}
-
-  Future<Uint8List> retrieveArtwork(int id) async {
-    final directory = await getApplicationSupportDirectory();
-    final file = File('${directory.path}/cache/shows/$id.jpg');
-
-    imageData.then((value) {
-      if (value.containsKey(id)) {
-        return value[id];
-      }
-    });
-
-    if (file.existsSync()) {
-      imageData.then((value) {
-        value[id] = file.readAsBytesSync();
-      });
-      return file.readAsBytesSync();
-    } else {
-      final url = Uri.https('api4.thetvdb.com', '/v4/series/$id/artworks');
-      var response = await http.get(
-        url,
-        headers: {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer ${await retrieveToken()}'},
-      );
-
-      if (response.statusCode == 200) {
-        var artwork = TvdbArtwork.fromJson(jsonDecode(response.body));
-        var art = await get(Uri.parse(artwork.data.image));
-        file.createSync(recursive: true);
-
-        imageData.then((value) {
-          value[id] = file.readAsBytesSync();
-        });
-
-        file.writeAsBytesSync(art.bodyBytes);
-        return Future.value(art.bodyBytes);
-      }
-
-      throw Exception('No artwork found!');
-    }
-  }
-
-  Future<String> retrieveToken() async {
-    // TODO: Save token to a local variable.
-    final file = await NyaaShows.dataManager.dataFile('tvdb');
-
-    return file.exists().then((_) async {
-      //TODO: Check if tvdb token is expired!
-      Map<String, dynamic> json = jsonDecode(await file.readAsString());
-      Future<String> val = Future<String>.value(json["token"]);
-      return val;
-    }).onError((_, except) async {
-      final url = Uri.https('api4.thetvdb.com', '/v4/login');
-
-      var response = await http.post(url,
-          headers: {'accept': 'application/json', 'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'apikey': await rootBundle.loadString('keys/tvdb.key'),
-          }));
-
-      if (response.statusCode == 200) {
-        Map<String, dynamic> json = jsonDecode(response.body);
-
-        final file = await NyaaShows.dataManager.dataFile('tvdb');
-        file.writeAsString(jsonEncode(json["data"]));
-      }
-
-      return Future<String>.value("");
-    });
   }
 }
 
@@ -425,6 +351,24 @@ class RealDebridAPI {
             checkMagnet(id, context, torrentEpisode: torrentEpisode);
           } else if (response.statusCode == 401) {
             developer.log('Access Token expired!');
+
+            showDialog<String>(
+              context: context,
+              builder: (BuildContext context) => AlertDialog(
+                title: const Text('Real-Debrid: Access-Token expired'),
+                content: const Text('Your real-debrid access token has expired, what should we do?'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'Cancel'),
+                    child: const Text('Nothing'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, 'Renew Token'),
+                    child: const Text('Renew Token'),
+                  ),
+                ],
+              ),
+            );
           }
         }
       },
@@ -493,24 +437,12 @@ class RealDebridAPI {
         String path = file["path"];
         var bytes = file["bytes"];
         var selected = file["selected"];
-        if (path.contains(RegExp(r'^.*\.(mp4|mkv|wmv|avi)$'))) {
-          //TODO: Check if it's the right episode.
-          var seaNum = torrentEpisode.seasonId;
-          var epNum = torrentEpisode.episodeId;
-          NyaaShows.log('Trying RegExp: $path');
-          if (path.contains(RegExp('s([0]$seaNum|$seaNum)', caseSensitive: false))) {
-            NyaaShows.log('Season entry got');
-            if (path.contains(RegExp('e([0]$seaNum|$seaNum)', caseSensitive: false))) {
-              NyaaShows.log('Episode entry got');
-              ids.add(id0);
-            }
-          }
-          // if (path.contains(torrentEpisode.seasonName) && path.contains(torrentEpisode.episodeName)) {
-          //   ids.add(id0);
-          //   print(path);
-          // }
+        if (TorrentHelper.checkFile(path, torrentEpisode)) {
+          ids.add(id0);
         }
       }
+
+      print(id);
 
       final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/selectFiles/$id');
       var post = await http.post(url, headers: {'Authorization': 'Bearer $value'}, body: {'files': ids.join(',')});

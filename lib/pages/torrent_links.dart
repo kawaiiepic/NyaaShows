@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nyaashows/main.dart';
-import 'package:nyaashows/pages/episodes_page.dart';
+import 'package:nyaashows/torrents/helper.dart';
 import 'package:nyaashows/torrents/tpb.dart';
 
 class TorrentLinks extends StatelessWidget {
@@ -12,8 +12,8 @@ class TorrentLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: const Text("Torrents")),
-        body: FutureBuilder<List<TPB>>(
-            future: ThePirateBay.torrent(torrentEpisode: torrentEpisode),
+        body: FutureBuilder<List<TorrentFile>>(
+            future: TorrentHelper.search(torrentEpisode: torrentEpisode),
             builder: (context, snapshot) {
               Widget child;
 

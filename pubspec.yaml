@@ -38,9 +38,10 @@ dependencies:
   cupertino_icons: ^1.0.6
   http: ^1.2.2
   url_launcher: ^6.3.0
-  flutter_web_auth_2: ^3.1.2
+  flutter_web_auth_2: ^4.0.1
   path_provider: ^2.1.4
   html_parser_plus: ^0.1.4
+  html: ^0.15.0
   media_kit: ^1.1.11 # Primary package.
   media_kit_video: ^1.2.5 # For video rendering.
   media_kit_libs_video: ^1.0.5 # Native video dependencies.
@@ -50,7 +51,11 @@ dependencies:
   media_kit_libs_macos_video: any
   media_kit_libs_windows_video: any
   media_kit_libs_linux: any
-  discord_rpc: ^0.0.2
+  rust_lib_nyaashows:
+    path: rust_builder
+  flutter_rust_bridge: 2.5.0
+  flutter_discord_rpc: ^1.0.0
+  flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:
@@ -61,8 +66,10 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
   test: ^1.25.7
+  integration_test:
+    sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -76,10 +83,10 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - keys/trakt.key
     - keys/tvdb.key
-    - keys/trakt_client_id.key
-    - keys/traktSecret
+    - keys/trakt_client.key
+    - keys/trakt_secret.key
+    - assets/trakt-logo.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

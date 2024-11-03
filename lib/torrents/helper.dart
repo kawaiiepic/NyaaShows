@@ -1,28 +1,54 @@
 import 'package:nyaashows/main.dart';
+import 'package:nyaashows/torrents/torrent_galaxy.dart';
 import 'package:nyaashows/torrents/tpb.dart';
 
 class TorrentHelper {
-  static final List<TorrentEngine> _torrentEngines = [ThePirateBay()];
+  static final List<TorrentEngine> _torrentEngines = [
+    // ThePirateBay(),
+    TorrentGalaxy()
+  ];
 
-  static Future<List<TorrentFile>> search({required TorrentEpisode torrentEpisode}) async {
+  static Future<List<TorrentFile>> search({required TorrentEpisode torrentEpisode, searchEverything = false}) async {
     List<TorrentFile> list = [];
     for (var torrentEngine in _torrentEngines) {
-      await torrentEngine.search(torrentEpisode).then((torrentFiles) {
-        if (torrentFiles != null) {
-          for (var torrentFile in torrentFiles) {
-            if (checkTorrent(torrentFile, torrentEpisode)) {
-              // NyaaShows.log('Torrent Added: ${torrentFile.title}');
-              list.add(torrentFile);
-            }
+      List<TorrentFile>? torrentFiles;
+      if (searchEverything) {
+        torrentFiles = await torrentEngine.search([(websiteSafeSearchTerm(torrentEpisode.showName))]);
+      } else {
+        torrentFiles = await torrentEngine.search([
+          "${websiteSafeSearchTerm(torrentEpisode.showName)} s${prettifyNumber(torrentEpisode.seasonId)}",
+          '${websiteSafeSearchTerm(torrentEpisode.showName)} season ${prettifyNumber(torrentEpisode.seasonId)}'
+        ]);
+      }
+      if (torrentFiles != null) {
+        for (var torrentFile in torrentFiles) {
+          torrentFile.provider = torrentEngine.name;
+          NyaaShows.log('Torrent Added: ${torrentFile.title}');
+          if (searchEverything) {
+            list.add(torrentFile);
+          } else {
+            list.add(torrentFile);
           }
+          // } else if (checkTorrent(torrentFile, torrentEpisode)) {
+          //   NyaaShows.log('Torrent Added: ${torrentFile.title}');
+          //   list.add(torrentFile);
+          // }
         }
-      });
+      }
     }
     return list;
   }
 
+  static String prettifyNumber(int number) {
+    if (number < 10) {
+      return '0$number';
+    } else {
+      return '$number';
+    }
+  }
+
   static String websiteSafeSearchTerm(String searchTerm) {
-    var search = searchTerm.replaceAll(' ', '+');
+    var search = searchTerm.replaceAll('-', ' ').replaceAll(':', ' ');
     NyaaShows.log('Search: $search');
     return search;
   }
@@ -50,12 +76,20 @@ class TorrentHelper {
     bool episode = _checkEpisode(torrentFile.title, torrentEpisode.episodeId);
     bool title = _checkTitle(torrentFile.title, torrentEpisode.showName);
 
-    NyaaShows.log('Title: ${torrentFile.title}, Title: $title, Season: $season, Episode: $episode, Size: $size, Seeders: $seeders, Leechers: $leechers');
+    NyaaShows.log(
+        'Title: ${torrentFile.title}, Title: $title, Season: $season, Episode: $episode, Size: $size + ${torrentFile.size}, Seeders: $seeders, Leechers: $leechers');
 
     // NyaaShows.log(
     //     'Torrent | Title: ${torrentFile.title}, Size: ${torrentFile.size}, Seeders: ${torrentFile.seeders}, Leeechers: ${torrentFile.leechers}, Upload Date: ${torrentFile.uploadedDate}');
-    if (size && title && season && episode && seeders && leechers) {
-      return true;
+    if (size && title && season) {
+      // seeders && leechers
+      if (torrentFile.size! >= 1200) {
+        return true;
+      } else if (episode) {
+        return true;
+      } else {
+        return false;
+      }
     } else {
       return false;
     }
@@ -83,11 +117,19 @@ class TorrentHelper {
   }
 
   static bool _checkSeason(String title, int seasonId) {
-    return title.contains(RegExp('s([0]${seasonId}|${seasonId})', caseSensitive: false));
+    if (seasonId < 10) {
+      return title.contains('0$seasonId');
+    } else {
+      return title.contains('$seasonId');
+    }
   }
 
   static bool _checkEpisode(String title, int episodeId) {
-    return title.contains(RegExp('e([0]${episodeId}|${episodeId})', caseSensitive: false));
+    if (episodeId < 10) {
+      return title.contains('0$episodeId');
+    } else {
+      return title.contains('$episodeId');
+    }
   }
 
   static bool _checkFileExtension(String filePath) {
@@ -103,6 +145,7 @@ class TorrentFile {
   int? leechers;
   String uploader;
   String magnet;
+  String provider = "";
 
   TorrentFile(
       {required this.title,
@@ -138,5 +181,6 @@ class TorrentEpisode {
 }
 
 abstract class TorrentEngine {
-  Future<List<TorrentFile>?> search(TorrentEpisode torrentEpisode);
+  abstract String name;
+  Future<List<TorrentFile>?> search(List<String> searchTerms);
 }

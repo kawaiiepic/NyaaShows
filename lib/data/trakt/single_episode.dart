@@ -4,7 +4,8 @@
 
 import 'dart:convert';
 
-SingleEpisode singleEpisodeFromJson(String str) => SingleEpisode.fromJson(json.decode(str));
+SingleEpisode singleEpisodeFromJson(String str) =>
+    SingleEpisode.fromJson(json.decode(str));
 
 String singleEpisodeToJson(SingleEpisode data) => json.encode(data.toJson());
 
@@ -53,7 +54,8 @@ class SingleEpisode {
         rating: json["rating"],
         votes: json["votes"],
         commentCount: json["comment_count"],
-        availableTranslations: List<String>.from(json["available_translations"].map((x) => x)),
+        availableTranslations:
+            List<String>.from(json["available_translations"].map((x) => x)),
         runtime: json["runtime"],
         episodeType: json["episode_type"],
       );
@@ -70,7 +72,8 @@ class SingleEpisode {
         "rating": rating,
         "votes": votes,
         "comment_count": commentCount,
-        "available_translations": List<dynamic>.from(availableTranslations.map((x) => x)),
+        "available_translations":
+            List<dynamic>.from(availableTranslations.map((x) => x)),
         "runtime": runtime,
         "episode_type": episodeType,
       };
@@ -78,9 +81,9 @@ class SingleEpisode {
 
 class Ids {
   int trakt;
-  int tvdb;
-  String imdb;
-  int tmdb;
+  int? tvdb;
+  String? imdb;
+  int? tmdb;
 
   Ids({
     required this.trakt,

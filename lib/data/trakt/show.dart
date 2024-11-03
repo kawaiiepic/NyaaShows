@@ -1,145 +1,135 @@
 import 'dart:convert';
 
-Show showFromJson(String str) => Show.fromJson(json.decode(str));
-
-String showToJson(Show data) => json.encode(data.toJson());
+import 'single_episode.dart';
 
 class Show {
-  int plays;
-  DateTime lastWatchedAt;
-  DateTime lastUpdatedAt;
-  dynamic resetAt;
-  ShowClass show;
-  List<Season> seasons;
+  String? title;
+  int? year;
+  Ids? ids;
+  String? tagline;
+  String? overview;
+  DateTime? firstAired;
+  Airs? airs;
+  int? runtime;
+  String? certification;
+  String? network;
+  String? country;
+  DateTime? updatedAt;
+  dynamic trailer;
+  String? homepage;
+  String? status;
+  double? rating;
+  int? votes;
+  int? commentCount;
+  List<String>? languages;
+  List<String>? availableTranslations;
+  List<String>? genres;
+  int? airedEpisodes;
 
   Show({
-    required this.plays,
-    required this.lastWatchedAt,
-    required this.lastUpdatedAt,
-    required this.resetAt,
-    required this.show,
-    required this.seasons,
+    this.title,
+    this.year,
+    this.ids,
+    this.tagline,
+    this.overview,
+    this.firstAired,
+    this.airs,
+    this.runtime,
+    this.certification,
+    this.network,
+    this.country,
+    this.updatedAt,
+    this.trailer,
+    this.homepage,
+    this.status,
+    this.rating,
+    this.votes,
+    this.commentCount,
+    this.languages,
+    this.availableTranslations,
+    this.genres,
+    this.airedEpisodes,
   });
+
+  factory Show.fromRawJson(String str) => Show.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
 
   factory Show.fromJson(Map<String, dynamic> json) => Show(
-        plays: json["plays"],
-        lastWatchedAt: DateTime.parse(json["last_watched_at"]),
-        lastUpdatedAt: DateTime.parse(json["last_updated_at"]),
-        resetAt: json["reset_at"],
-        show: ShowClass.fromJson(json["show"]),
-        seasons: List<Season>.from(json["seasons"].map((x) => Season.fromJson(x))),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "plays": plays,
-        "last_watched_at": lastWatchedAt.toIso8601String(),
-        "last_updated_at": lastUpdatedAt.toIso8601String(),
-        "reset_at": resetAt,
-        "show": show.toJson(),
-        "seasons": List<dynamic>.from(seasons.map((x) => x.toJson())),
-      };
-}
-
-class Season {
-  int number;
-  List<Episode> episodes;
-
-  Season({
-    required this.number,
-    required this.episodes,
-  });
-
-  factory Season.fromJson(Map<String, dynamic> json) => Season(
-        number: json["number"],
-        episodes: List<Episode>.from(json["episodes"].map((x) => Episode.fromJson(x))),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "number": number,
-        "episodes": List<dynamic>.from(episodes.map((x) => x.toJson())),
-      };
-}
-
-class Episode {
-  int number;
-  int plays;
-  DateTime lastWatchedAt;
-
-  Episode({
-    required this.number,
-    required this.plays,
-    required this.lastWatchedAt,
-  });
-
-  factory Episode.fromJson(Map<String, dynamic> json) => Episode(
-        number: json["number"],
-        plays: json["plays"],
-        lastWatchedAt: DateTime.parse(json["last_watched_at"]),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "number": number,
-        "plays": plays,
-        "last_watched_at": lastWatchedAt.toIso8601String(),
-      };
-}
-
-class ShowClass {
-  String title;
-  int year;
-  Ids ids;
-
-  ShowClass({
-    required this.title,
-    required this.year,
-    required this.ids,
-  });
-
-  factory ShowClass.fromJson(Map<String, dynamic> json) => ShowClass(
         title: json["title"],
         year: json["year"],
-        ids: Ids.fromJson(json["ids"]),
+        ids: json["ids"] == null ? null : Ids.fromJson(json["ids"]),
+        tagline: json["tagline"],
+        overview: json["overview"],
+        firstAired: json["first_aired"] == null ? null : DateTime.parse(json["first_aired"]),
+        airs: json["airs"] == null ? null : Airs.fromJson(json["airs"]),
+        runtime: json["runtime"],
+        certification: json["certification"],
+        network: json["network"],
+        country: json["country"],
+        updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+        trailer: json["trailer"],
+        homepage: json["homepage"],
+        status: json["status"],
+        rating: json["rating"],
+        votes: json["votes"],
+        commentCount: json["comment_count"],
+        languages: json["languages"] == null ? [] : List<String>.from(json["languages"]!.map((x) => x)),
+        availableTranslations: json["available_translations"] == null ? [] : List<String>.from(json["available_translations"]!.map((x) => x)),
+        genres: json["genres"] == null ? [] : List<String>.from(json["genres"]!.map((x) => x)),
+        airedEpisodes: json["aired_episodes"],
       );
 
   Map<String, dynamic> toJson() => {
         "title": title,
         "year": year,
-        "ids": ids.toJson(),
+        "ids": ids?.toJson(),
+        "tagline": tagline,
+        "overview": overview,
+        "first_aired": firstAired?.toIso8601String(),
+        "airs": airs?.toJson(),
+        "runtime": runtime,
+        "certification": certification,
+        "network": network,
+        "country": country,
+        "updated_at": updatedAt?.toIso8601String(),
+        "trailer": trailer,
+        "homepage": homepage,
+        "status": status,
+        "rating": rating,
+        "votes": votes,
+        "comment_count": commentCount,
+        "languages": languages == null ? [] : List<dynamic>.from(languages!.map((x) => x)),
+        "available_translations": availableTranslations == null ? [] : List<dynamic>.from(availableTranslations!.map((x) => x)),
+        "genres": genres == null ? [] : List<dynamic>.from(genres!.map((x) => x)),
+        "aired_episodes": airedEpisodes,
       };
 }
 
-class Ids {
-  int? trakt;
-  String? slug;
-  int? tvdb;
-  String? imdb;
-  int? tmdb;
-  dynamic tvrage;
+class Airs {
+  String? day;
+  String? time;
+  String? timezone;
 
-  Ids({
-    required this.trakt,
-    required this.slug,
-    required this.tvdb,
-    required this.imdb,
-    required this.tmdb,
-    required this.tvrage,
+  Airs({
+    this.day,
+    this.time,
+    this.timezone,
   });
 
-  factory Ids.fromJson(Map<String, dynamic> json) => Ids(
-        trakt: json["trakt"],
-        slug: json["slug"],
-        tvdb: json["tvdb"],
-        imdb: json["imdb"],
-        tmdb: json["tmdb"],
-        tvrage: json["tvrage"],
+  factory Airs.fromRawJson(String str) => Airs.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
+  factory Airs.fromJson(Map<String, dynamic> json) => Airs(
+        day: json["day"],
+        time: json["time"],
+        timezone: json["timezone"],
       );
 
   Map<String, dynamic> toJson() => {
-        "trakt": trakt,
-        "slug": slug,
-        "tvdb": tvdb,
-        "imdb": imdb,
-        "tmdb": tmdb,
-        "tvrage": tvrage,
+        "day": day,
+        "time": time,
+        "timezone": timezone,
       };
 }

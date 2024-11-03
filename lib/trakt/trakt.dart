@@ -7,30 +7,34 @@ import 'package:http/http.dart' as http;
 import 'package:nyaashows/data/data_manager.dart';
 import 'package:nyaashows/data/trakt/all_seasons.dart';
 import 'package:nyaashows/data/trakt/episodes_from_season.dart';
+import 'package:nyaashows/data/trakt/hidden.dart' as hidden_json;
 import 'package:nyaashows/data/trakt/profile.dart';
+import 'package:nyaashows/data/trakt/search/show.dart' as SearchShow;
 import 'package:nyaashows/data/trakt/single_episode.dart';
 import 'package:nyaashows/data/trakt/single_season.dart';
-import 'package:nyaashows/data/trakt/watched.dart';
 import 'package:nyaashows/data/trakt/watched_progress.dart' as watched_progress;
+import '../data/trakt/show.dart';
 import 'package:nyaashows/main.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../data/trakt/watched.dart' as watchedClass;
 
 class Trakt {
   List<CombinedShow> _nextUpFuture = [];
 
-  void auth(
+  Future<bool> auth(
     BuildContext context,
   ) async {
     var traktData = DataManager.traktData;
-    traktData.retriveToken().then((_) {
-      return showDialog(
+    return traktData.retriveToken().then((_) {
+      showDialog(
           context: context,
           builder: (context) => AlertDialog(
-                title: const Text('Trakt Auth'),
+                title: const Text('trakt settings'),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('@Placeholder'),
+                    const Text('@Placeholder'),
                     TextButton(
                         onPressed: () async {
                           Navigator.pop(context);
@@ -47,6 +51,7 @@ class Trakt {
                       child: const Text("Cancel"))
                 ],
               ));
+      return true;
     }).onError((_, except) async {
       final url = Uri.https('api.trakt.tv', '/oauth/device/code');
       var response = await http.post(url, body: {'client_id': await rootBundle.loadString('keys/trakt_client_id.key')});
@@ -75,6 +80,7 @@ class Trakt {
           }
         });
 
+        final completer = Completer<bool>();
         var timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
           //TODO: Implement ExpiresIn and Interval.
           var hasAccessToken = false;
@@ -118,6 +124,10 @@ class Trakt {
             if (accessToken.isNotEmpty) // TODO: Check all variables
             {
               DataManager.traktData.storeToken(accessToken, tokenType, expiresIn, refreshToken, scope, createdAt);
+              Navigator.pop(context, 'Submit');
+              if (!completer.isCompleted) {
+                completer.complete(true);
+              }
             }
             timer.cancel();
           } else {
@@ -125,10 +135,10 @@ class Trakt {
           }
         });
 
-        return showDialog(
+        showDialog(
             context: context,
             builder: (context) => AlertDialog(
-                  title: const Text('Trakt Auth'),
+                  title: const Text('(Re-)Authenticate trakt'),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -155,7 +165,12 @@ class Trakt {
                         child: const Text("Cancel"))
                   ],
                 ));
+
+        final result = await completer.future;
+        print("Results obtained!");
+        return true;
       }
+      return false;
     });
   }
 
@@ -165,7 +180,7 @@ class Trakt {
       final response = await http.get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $value',
-        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
         'trakt-api-version': '2'
       });
 
@@ -185,7 +200,7 @@ class Trakt {
       final response = await http.get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $token',
-        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
         'trakt-api-version': '2'
       });
 
@@ -206,7 +221,7 @@ class Trakt {
       final response = await http.get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $value',
-        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
         'trakt-api-version': '2'
       });
 
@@ -225,7 +240,7 @@ class Trakt {
       final response = await http.get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $value',
-        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
         'trakt-api-version': '2'
       });
 
@@ -246,7 +261,7 @@ class Trakt {
       return _nextUp(page: page).then((shows) {
         if (shows != null) {
           _nextUpFuture = shows;
-          return _nextUpFuture;
+          return shows;
         } else {
           return null;
         }
@@ -259,32 +274,43 @@ class Trakt {
   Future<List<CombinedShow>?> _nextUp({page = 0}) async {
     //TODO: Implement Hidden Shows. https://trakt.docs.apiary.io/#reference/users/hidden-items/get-hidden-items
     return accessToken().then((token) async {
-      NyaaShows.log('[Next Up]');
       var url = Uri.https('api.trakt.tv', '/sync/watched/shows', {'extended': 'noseasons'});
       var response = await http.get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $token',
-        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
         'trakt-api-version': '2'
       });
 
       if (response.statusCode == 200) {
-        var watched = watchedFromJson(response.body);
+        var watched = watchedClass.watchedFromJson(response.body);
+        var hidden = (await hiddenShows());
 
         List<CombinedShow> shows = [];
 
-        var startInt = 10 * page; // 1st page (0-9), 2nd page (10-19)
-        var endInt = startInt + 9;
+        var startInt = 20 * page; // 1st page (0-9), 2nd page (10-19)
+        var endInt = startInt + 19;
         var currentInt = 0;
 
         for (var show in watched) {
-          var traktId = show.show.ids.trakt;
+          var traktId = show.show.ids!.trakt;
+          var skip = false;
+
+          for (var hide in hidden) {
+            if (hide.show!.ids!.trakt == show.show.ids!.trakt) {
+              skip = true;
+            }
+          }
+
+          if (skip) {
+            continue;
+          }
 
           var url2 = Uri.https('api.trakt.tv', '/shows/$traktId/progress/watched');
           var response2 = await http.get(url2, headers: {
             'Content-type': 'application/json',
             'Authorization': 'Bearer $token',
-            'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+            'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
             'trakt-api-version': '2'
           });
 
@@ -293,8 +319,6 @@ class Trakt {
             if (watchedProgress.aired != watchedProgress.completed && watchedProgress.nextEpisode != null) {
               if (currentInt >= startInt && currentInt <= endInt) {
                 shows.add(CombinedShow(show: show.show, watchedProgress: watchedProgress));
-                NyaaShows.log(
-                    'In-Progress: ${show.show.title} | Next Up: ${watchedProgress.nextEpisode!.title} - ${watchedProgress.nextEpisode!.season}:${watchedProgress.nextEpisode!.number}');
               } else if (currentInt > endInt) {
                 break;
               }
@@ -309,16 +333,98 @@ class Trakt {
     });
   }
 
+  Future<List<hidden_json.HiddenItems>> hiddenShows() async {
+    var token = (await accessToken());
+    var url = Uri.https('api.trakt.tv', '/users/hidden/progress_watched', {'type': 'show'});
+    var response = await http.get(url, headers: {
+      'Content-type': 'application/json',
+      'Authorization': 'Bearer $token',
+      'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
+      'trakt-api-version': '2'
+    });
+
+    if (response.statusCode == 200) {
+      var hiddenItems = hidden_json.hiddenItemsFromJson(response.body);
+      return hiddenItems;
+    } else {
+      return Future.error(Exception());
+    }
+  }
+
+  Future<watched_progress.WatchedProgress> watchedProgress(int id) async {
+    return accessToken().then((token) async {
+      var url = Uri.https('api.trakt.tv', '/shows/$id/progress/watched');
+      var response = await http.get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
+        'trakt-api-version': '2'
+      });
+
+      if (response.statusCode == 200) {
+        var watchedProgress = watched_progress.watchedProgressFromJson(response.body);
+        return watchedProgress;
+      }
+      return Future.error(Exception());
+    });
+  }
+
+  Future<Show?> show(int id) async {
+    return accessToken().then((token) async {
+      var url = Uri.https('api.trakt.tv', '/shows/$id', {'extended': 'full'});
+      var response = await http.get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
+        'trakt-api-version': '2'
+      });
+
+      if (response.statusCode == 200) {
+        var show = Show.fromJson(jsonDecode(response.body));
+        return show;
+      }
+      return null;
+    });
+  }
+
+  Future<List<SearchShow.SearchShow>> search(SearchType type, String query) async {
+    return accessToken().then((token) async {
+      var url = Uri.https('api.trakt.tv', '/search/show', {'query': query});
+      var response = await http.get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
+        'trakt-api-version': '2'
+      });
+
+      List<SearchShow.SearchShow> entries = [];
+
+      if (response.statusCode == 200) {
+        var int = 0;
+        for (var boop in jsonDecode(response.body)) {
+          if (int < 5) {
+            SearchShow.SearchShow entry = SearchShow.SearchShow.fromJson(boop);
+            entries.add(entry);
+            int++;
+          }
+        }
+        return entries;
+      }
+      throw Future.error(Exception());
+    });
+  }
+
   Future<Profile?> userData() async {
     return accessToken().then((value) async {
       var url = Uri.https('api.trakt.tv', '/users/me', {'extended': 'full'});
       var response = await http.get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $value',
-        'trakt-api-key': await rootBundle.loadString('keys/trakt.key'),
+        'trakt-api-key': await rootBundle.loadString('keys/trakt_client.key'),
         'trakt-api-version': '2'
       });
 
+      print(response.statusCode);
       if (response.statusCode == 200) {
         return profileFromJson(response.body);
       } else {
@@ -327,23 +433,27 @@ class Trakt {
     });
   }
 
-  Future<String> accessToken() async {
+  Future<String?> accessToken() async {
     final file = await NyaaShows.dataManager.dataFile('user');
 
     return file.exists().then((value) async {
-      // Check if access_token is expired!
-      Map<String, dynamic> json = jsonDecode(await file.readAsString());
-      Future<String> val = Future<String>.value("");
-      json.forEach((key, value) async {
-        // developer.log('Key: $key, Value: $value');
-        if (key == "access_token") {
-          val = Future.value(value as String);
-          // print("Access Token exists!");
-          // print(value);
-        }
-      });
+      if (value) {
+        // Check if access_token is expired!
+        Map<String, dynamic> json = jsonDecode(await file.readAsString());
+        Future<String> val = Future<String>.value("");
+        json.forEach((key, value) async {
+          // developer.log('Key: $key, Value: $value');
+          if (key == "access_token") {
+            val = Future.value(value as String);
+            // print("Access Token exists!");
+            // print(value);
+          }
+        });
 
-      return await val;
+        return await val;
+      } else {
+        return Future.error(Exception());
+      }
     });
   }
 }
@@ -354,3 +464,5 @@ class CombinedShow {
 
   CombinedShow({required this.show, required this.watchedProgress});
 }
+
+enum SearchType { movie, show }

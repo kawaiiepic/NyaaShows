@@ -47,5 +47,6 @@ pkgs.mkShell {
     libva
     libvdpau
     ninja
+    webkitgtk_4_1
   ];
 }

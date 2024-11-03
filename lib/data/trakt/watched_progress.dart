@@ -4,7 +4,8 @@
 
 import 'dart:convert';
 
-import 'package:nyaashows/data/trakt/show.dart';
+
+import 'single_episode.dart';
 
 WatchedProgress watchedProgressFromJson(String str) => WatchedProgress.fromJson(json.decode(str));
 
@@ -13,12 +14,12 @@ String watchedProgressToJson(WatchedProgress data) => json.encode(data.toJson())
 class WatchedProgress {
   int aired;
   int completed;
-  DateTime lastWatchedAt;
+  DateTime? lastWatchedAt;
   dynamic resetAt;
   List<Season> seasons;
   List<HiddenSeason> hiddenSeasons;
   TEpisode? nextEpisode;
-  TEpisode lastEpisode;
+  TEpisode? lastEpisode;
 
   WatchedProgress({
     required this.aired,
@@ -34,23 +35,23 @@ class WatchedProgress {
   factory WatchedProgress.fromJson(Map<String, dynamic> json) => WatchedProgress(
         aired: json["aired"],
         completed: json["completed"],
-        lastWatchedAt: DateTime.parse(json["last_watched_at"]),
+        lastWatchedAt: json.containsKey("last_watched_") ? DateTime.parse(json["last_watched_at"]) : null,
         resetAt: json["reset_at"],
         seasons: List<Season>.from(json["seasons"].map((x) => Season.fromJson(x))),
         hiddenSeasons: List<HiddenSeason>.from(json["hidden_seasons"].map((x) => HiddenSeason.fromJson(x))),
         nextEpisode: json["next_episode"] == null ? null : TEpisode.fromJson(json["next_episode"]),
-        lastEpisode: TEpisode.fromJson(json["last_episode"]),
+        lastEpisode: json["last_episode"] == null ? null : TEpisode.fromJson(json["last_episode"]),
       );
 // TEpisode.fromJson(json["next_episode"])
   Map<String, dynamic> toJson() => {
         "aired": aired,
         "completed": completed,
-        "last_watched_at": lastWatchedAt.toIso8601String(),
+        "last_watched_at": lastWatchedAt?.toIso8601String(),
         "reset_at": resetAt,
         "seasons": List<dynamic>.from(seasons.map((x) => x.toJson())),
         "hidden_seasons": List<dynamic>.from(hiddenSeasons.map((x) => x.toJson())),
         "next_episode": nextEpisode?.toJson(),
-        "last_episode": lastEpisode.toJson(),
+        "last_episode": lastEpisode?.toJson(),
       };
 }
 

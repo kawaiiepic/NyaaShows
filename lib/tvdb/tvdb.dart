@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:nyaashows/data/tvdb.dart';
-import 'package:nyaashows/main.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../main.dart';
 
 class TVDB {
   Map<int, Uint8List> imageData = {};
@@ -51,9 +51,8 @@ class TVDB {
     if (response.statusCode == 200) {
       var artwork = TvdbArtwork.fromJson(jsonDecode(response.body));
       return artwork.data.image;
-    } else {
-      return null;
-    }
+    } else {}
+    return null;
   }
 
   Future<Uint8List?> artwork(int tvdb) async {
@@ -81,7 +80,6 @@ class TVDB {
           headers: {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer ${await accessToken()}'},
         );
 
-        print(response.statusCode);
         if (response.statusCode == 200) {
           var artwork = TvdbArtwork.fromJson(jsonDecode(response.body));
           var art = await get(Uri.parse(artwork.data.image));
@@ -94,6 +92,7 @@ class TVDB {
           });
         }
       }
+      return null;
     });
   }
 }

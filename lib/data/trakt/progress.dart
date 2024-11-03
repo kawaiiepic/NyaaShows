@@ -1,6 +1,9 @@
 import 'dart:convert';
 
-TraktProgress traktProgressFromJson(String str) => TraktProgress.fromJson(json.decode(str));
+import 'single_episode.dart';
+
+TraktProgress traktProgressFromJson(String str) =>
+    TraktProgress.fromJson(json.decode(str));
 
 String traktProgressToJson(TraktProgress data) => json.encode(data.toJson());
 
@@ -36,7 +39,8 @@ class TraktProgress {
       completed: json["completed"],
       lastWatchedAt: json["last_watched_at"],
       resetAt: json["reset_at"],
-      seasons: List<Season>.from(json["seasons"].map((x) => Season.fromJson(x))),
+      seasons:
+          List<Season>.from(json["seasons"].map((x) => Season.fromJson(x))),
       hiddenSeasons: List<dynamic>.from(json["hidden_seasons"].map((x) => x)),
       nextEpisode: nextEpisode,
       lastEpisode: json["last_episode"],
@@ -83,38 +87,6 @@ class NextEpisode {
       };
 }
 
-class Ids {
-  int trakt;
-  int tvdb;
-  String imdb;
-  int tmdb;
-  dynamic tvrage;
-
-  Ids({
-    required this.trakt,
-    required this.tvdb,
-    required this.imdb,
-    required this.tmdb,
-    required this.tvrage,
-  });
-
-  factory Ids.fromJson(Map<String, dynamic> json) => Ids(
-        trakt: json["trakt"],
-        tvdb: json["tvdb"],
-        imdb: json["imdb"],
-        tmdb: json["tmdb"],
-        tvrage: json["tvrage"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "trakt": trakt,
-        "tvdb": tvdb,
-        "imdb": imdb,
-        "tmdb": tmdb,
-        "tvrage": tvrage,
-      };
-}
-
 class Season {
   int number;
   dynamic title;
@@ -135,7 +107,8 @@ class Season {
         title: json["title"],
         aired: json["aired"],
         completed: json["completed"],
-        episodes: List<Episode>.from(json["episodes"].map((x) => Episode.fromJson(x))),
+        episodes: List<Episode>.from(
+            json["episodes"].map((x) => Episode.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {

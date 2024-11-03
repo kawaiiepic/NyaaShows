@@ -4,13 +4,13 @@
 
 import 'dart:convert';
 
-import 'package:nyaashows/data/trakt/show.dart';
+
+import 'single_episode.dart';
 
 List<Season> seasonFromJson(String str) {
   List<Season> seasons = [];
   List<dynamic> json = jsonDecode(str);
 
-  // print(str);
   for (var entry in json) {
     DateTime firstAired;
     if (entry['first_aired'] == null) {
@@ -36,7 +36,8 @@ List<Season> seasonFromJson(String str) {
   return seasons;
 }
 
-String seasonToJson(List<Season> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String seasonToJson(List<Season> data) =>
+    json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class Season {
   int number;

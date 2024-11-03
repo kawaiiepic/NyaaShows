@@ -43,7 +43,7 @@ class Data {
   int defaultSeasonType;
   bool isOrderRandomized;
   DateTime lastUpdated;
-  int averageRuntime;
+  int? averageRuntime;
   dynamic episodes;
   String overview;
   String year;

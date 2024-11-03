@@ -4,9 +4,11 @@
 
 import 'dart:convert';
 
-import 'package:nyaashows/data/trakt/show.dart';
 
-SingleSeason singleSeasonFromJson(String str) => SingleSeason.fromJson(json.decode(str));
+import 'single_episode.dart';
+
+SingleSeason singleSeasonFromJson(String str) =>
+    SingleSeason.fromJson(json.decode(str));
 
 String singleSeasonToJson(SingleSeason data) => json.encode(data.toJson());
 

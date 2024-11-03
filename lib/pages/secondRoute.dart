@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:nyaashows/data/data_manager.dart';
 import 'package:nyaashows/data/trakt/progress.dart';
 import 'package:nyaashows/data/trakt/all_seasons.dart' as all_seasons;
-import 'package:nyaashows/data/trakt/watched.dart';
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/pages/episodes_page.dart';
 import 'package:nyaashows/pages/torrent_links.dart';
@@ -45,15 +44,15 @@ class SecondRoute extends StatelessWidget {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(combinedShow.show.title),
+          title: Text(combinedShow.show.title!),
         ),
         body: FutureBuilder<TraktProgress?>(
-            future: DataManager.traktData.showProgress(combinedShow.show.ids.trakt),
+            future:
+                DataManager.traktData.showProgress(combinedShow.show.ids!.trakt),
             builder: (context, snapshot) {
               Widget child;
-              print(combinedShow.show.ids.tvdb);
               if (snapshot.hasData) {
-                final id = combinedShow.show.ids.trakt;
+                final id = combinedShow.show.ids!.trakt;
                 Widget child2;
                 child = FutureBuilder<List<all_seasons.Season>?>(
                   future: NyaaShows.trakt.seasonsFromId(id: id),
@@ -70,14 +69,26 @@ class SecondRoute extends StatelessWidget {
                                     MaterialPageRoute(
                                         builder: (context) => TorrentLinks(
                                               torrentEpisode: TorrentEpisode(
-                                                  showName: combinedShow.show.title,
-                                                  seasonId: combinedShow.watchedProgress.nextEpisode!.season,
-                                                  episodeId: combinedShow.watchedProgress.nextEpisode!.number,
-                                                  episodeName: combinedShow.watchedProgress.nextEpisode!.title,
+                                                  showName:
+                                                      combinedShow.show.title!,
+                                                  seasonId: combinedShow
+                                                      .watchedProgress
+                                                      .nextEpisode!
+                                                      .season,
+                                                  episodeId: combinedShow
+                                                      .watchedProgress
+                                                      .nextEpisode!
+                                                      .number,
+                                                  episodeName: combinedShow
+                                                      .watchedProgress
+                                                      .nextEpisode!
+                                                      .title,
                                                   seasonName: '',
-                                                  showYear: combinedShow.show.year,
+                                                  showYear:
+                                                      combinedShow.show.year!,
                                                   episodeYear: 1,
-                                                  tvdb: combinedShow.show.ids.tvdb!),
+                                                  tvdb: combinedShow
+                                                      .show.ids!.tvdb!),
                                             )));
                               },
                               child: Text(

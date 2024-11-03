@@ -1,10 +1,9 @@
 import 'dart:async';
 
-import 'package:discord_rpc/discord_rpc.dart';
+import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:flutter/material.dart';
-import 'package:nyaashows/data/data_manager.dart';
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/torrents/helper.dart';
 
@@ -26,54 +25,54 @@ class MyScreenState extends State<VideoPlayer> {
 
   Timer? timer;
   late DateTime discordStartPoc;
-  late int discordEndPoc;
+  late DateTime discordEndPoc;
 
   @override
   void initState() {
     super.initState();
     // Play a [Media] or [Playlist].
-    print(player.state.position);
+
     super.widget.media;
     player.open(super.widget.media);
 
     discordStartPoc = DateTime.now();
 
-    NyaaShows.tvdb.showIcon(super.widget.torrentEpisode.tvdb).then((iconUrl) {
-
-    });
-    timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
-      if (player.state.playing) {
-        discordEndPoc = discordStartPoc.add(player.state.duration).millisecondsSinceEpoch;
-      }
-
-      NyaaShows.discord.updatePresence(switch (player.state.playing) {
-        false => DiscordPresence(
-            state:
-                'Watching 📺 ${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.showYear}) ${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
-            details: 'Paused',
-            startTimeStamp: discordStartPoc.millisecondsSinceEpoch,
-            endTimeStamp: discordEndPoc,
-            largeImageKey: 'https://i.pinimg.com/736x/7d/49/4e/7d494e29437e63f67c910253ab002436.jpg',
-            smallImageKey: 'play',
-            smallImageText: 'Paused'
-            // largeImageText: 'This text describes the large image.',
-            // smallImageKey: 'browsing',
-            // smallImageText: 'This text describes the small image.',
+    timer = Timer.periodic(const Duration(seconds: 2), (Timer t) {
+      NyaaShows.tvdb.showIcon(super.widget.torrentEpisode.tvdb).then((var artwork) {
+        NyaaShows.discord.updatePresence(switch (player.state.playing) {
+          true => RPCActivity(
+              activityType: ActivityType.watching,
+              assets: RPCAssets(
+                largeImage: artwork,
+                largeText: super.widget.torrentEpisode.showName,
+              ),
+              buttons: [
+                const RPCButton(label: "trakt", url: "https://trakt.tv"),
+              ],
+              details: '${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.episodeYear})',
+              state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
+              timestamps: RPCTimestamps(
+                start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
+                end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
+              ),
             ),
-        true => DiscordPresence(
-            state:
-                'Watching 📺 ${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.showYear}) ${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
-            details:
-                '[${player.state.position.inMinutes}:${player.state.position.inSeconds - (player.state.position.inMinutes * 60)}] - [${player.state.duration.inMinutes}:${player.state.duration.inSeconds - (player.state.duration.inMinutes * 60)}]',
-            startTimeStamp: discordStartPoc.millisecondsSinceEpoch,
-            endTimeStamp: discordEndPoc,
-            largeImageKey: 'https://i.pinimg.com/736x/7d/49/4e/7d494e29437e63f67c910253ab002436.jpg',
-            smallImageKey: 'pause',
-            smallImageText: 'Playing'
-            // largeImageText: 'This text describes the large image.',
-            // smallImageKey: 'browsing',
-            // smallImageText: 'This text describes the small image.',
+          false => RPCActivity(
+              activityType: ActivityType.watching,
+              assets: RPCAssets(
+                largeImage: artwork,
+                largeText: super.widget.torrentEpisode.showName,
+              ),
+              buttons: [
+                const RPCButton(label: "trakt", url: "https://trakt.tv"),
+              ],
+              details: '⏸️ ${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.showYear})',
+              state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
+              timestamps: RPCTimestamps(
+                start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
+                end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
+              ),
             ),
+        });
       });
     });
 
@@ -89,10 +88,6 @@ class MyScreenState extends State<VideoPlayer> {
 
   void setVideo(String url) {
     player.open(Media(url));
-  }
-
-  void getPosition() {
-    print(player.state.position);
   }
 
   @override
@@ -117,6 +112,42 @@ class MyScreenState extends State<VideoPlayer> {
           player.seek(player.state.position + const Duration(seconds: 30));
         },
         icon: const Icon(Icons.fast_forward_rounded));
+  }
+
+  Widget audioTrack() {
+    return PopupMenuButton(
+        icon: const Icon(Icons.audiotrack_rounded),
+        itemBuilder: (BuildContext context) {
+          List<PopupMenuEntry> st = [];
+          for (var subtitle in player.state.tracks.audio) {
+            if (subtitle.language != null) {
+              st.add(PopupMenuItem(
+                  child: Text(subtitle.language!),
+                  onTap: () {
+                    player.setAudioTrack(subtitle);
+                  }));
+            }
+          }
+
+          return st;
+        });
+  }
+
+  Widget subtitles() {
+    return PopupMenuButton(
+        icon: const Icon(Icons.closed_caption_rounded),
+        itemBuilder: (BuildContext context) {
+          List<PopupMenuEntry> st = [];
+          for (var subtitle in player.state.tracks.subtitle) {
+            if (subtitle.title != null) {
+              st.add(PopupMenuItem(child: Text(subtitle.title!), onTap: () {
+                    player.setSubtitleTrack(subtitle);
+                  }));
+            }
+          }
+
+          return st;
+        });
   }
 
   MaterialDesktopVideoControlsThemeData controls() {
@@ -147,17 +178,6 @@ class MyScreenState extends State<VideoPlayer> {
                 )
               ],
             ))
-        // MaterialDesktopCustomButton(
-        //   onPressed: () {
-        //     debugPrint('Custom "Settings" button pressed.');
-        //   },
-        //   icon: Column(
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: [
-        //     Text(super.widget.torrentEpisode.showName),
-        //     Text(super.widget.torrentEpisode.episodeName)
-        //   ],),
-        // ),
       ],
       // Modify bottom button bar:
       bottomButtonBar: [
@@ -169,11 +189,8 @@ class MyScreenState extends State<VideoPlayer> {
         const MaterialDesktopVolumeButton(),
         const MaterialDesktopPositionIndicator(),
         const Spacer(),
-        MaterialDesktopCustomButton(
-            onPressed: () {
-              getPosition();
-            },
-            icon: const Icon(Icons.closed_caption_sharp)),
+        audioTrack(),
+        subtitles(),
         MaterialDesktopCustomButton(onPressed: () {}, icon: const Icon(Icons.settings)),
         const MaterialDesktopFullscreenButton()
       ],

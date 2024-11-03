@@ -4,11 +4,14 @@
 
 import 'dart:convert';
 
-import 'package:nyaashows/data/trakt/show.dart';
+import 'package:nyaashows/data/trakt/single_episode.dart';
 
-List<EpisodesFromSeason> episodesFromSeasonFromJson(String str) => List<EpisodesFromSeason>.from(json.decode(str).map((x) => EpisodesFromSeason.fromJson(x)));
+List<EpisodesFromSeason> episodesFromSeasonFromJson(String str) =>
+    List<EpisodesFromSeason>.from(
+        json.decode(str).map((x) => EpisodesFromSeason.fromJson(x)));
 
-String episodesFromSeasonToJson(List<EpisodesFromSeason> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
+String episodesFromSeasonToJson(List<EpisodesFromSeason> data) =>
+    json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class EpisodesFromSeason {
   int season;
@@ -23,7 +26,8 @@ class EpisodesFromSeason {
     required this.ids,
   });
 
-  factory EpisodesFromSeason.fromJson(Map<String, dynamic> json) => EpisodesFromSeason(
+  factory EpisodesFromSeason.fromJson(Map<String, dynamic> json) =>
+      EpisodesFromSeason(
         season: json["season"],
         number: json["number"],
         title: json["title"],

@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import 'package:nyaashows/data/trakt/show.dart';
 
+
 List<Watched> watchedFromJson(String str) => List<Watched>.from(json.decode(str).map((x) => Watched.fromJson(x)));
 
 String watchedToJson(List<Watched> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
@@ -39,29 +40,5 @@ class Watched {
         "last_updated_at": lastUpdatedAt.toIso8601String(),
         "reset_at": resetAt?.toIso8601String(),
         "show": show.toJson(),
-      };
-}
-
-class Show {
-  String title;
-  int year;
-  Ids ids;
-
-  Show({
-    required this.title,
-    required this.year,
-    required this.ids,
-  });
-
-  factory Show.fromJson(Map<String, dynamic> json) => Show(
-        title: json["title"],
-        year: json["year"],
-        ids: Ids.fromJson(json["ids"]),
-      );
-
-  Map<String, dynamic> toJson() => {
-        "title": title,
-        "year": year,
-        "ids": ids.toJson(),
       };
 }

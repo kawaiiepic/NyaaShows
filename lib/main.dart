@@ -1,79 +1,82 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:nyaashows/data/data_manager.dart';
-import 'package:nyaashows/discord/discord.dart';
-import 'package:nyaashows/real-debrid/real_debrid.dart';
-import 'package:nyaashows/tmdb/tmdb.dart';
-import 'package:nyaashows/trakt/trakt.dart';
-import 'package:nyaashows/tvdb/tvdb.dart';
-import 'package:nyaashows/utils/locale_fix.dart';
-import 'package:video_player_media_kit/video_player_media_kit.dart';
-import 'pages/home.dart' as home;
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'dart:developer' as developer;
 
 class NyaaShows {
-  static Trakt trakt = Trakt();
-  static DataManager dataManager = DataManager();
-  static RealDebrid realDebrid = RealDebrid();
-  static Discord discord = Discord();
-  static TVDB tvdb = TVDB();
-  static TMDB tmdb = TMDB();
-
   static void log(String message) {
     developer.log(message);
   }
 }
 
 void main() async {
-  setNumericLocaleToC();
-  VideoPlayerMediaKit.ensureInitialized(
-    android: true, // default: false    -    dependency: media_kit_libs_android_video
-    iOS: true, // default: false    -    dependency: media_kit_libs_ios_video
-    macOS: true, // default: false    -    dependency: media_kit_libs_macos_video
-    windows: true, // default: false    -    dependency: media_kit_libs_windows_video
-    linux: true, // default: false    -    dependency: media_kit_libs_linux
-  );
-  NyaaShows.discord.init();
-  NyaaShows.trakt.hiddenShows();
-  runApp(const NyaaApp());
+  runApp(NyaaApp());
 }
 
-class NyaaApp extends StatelessWidget {
-  const NyaaApp({super.key});
+class NyaaApp extends StatefulWidget {
+  @override State<NyaaApp> createState() => _NyaaAppState();
+}
+
+class _NyaaAppState extends State<NyaaApp> {
+  ThemeMode? themeMode = ThemeMode.system;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NyaaShows',
-      theme: ThemeData(
-        brightness: Brightness.light,
-        /* light theme settings */
+    final materialLightTheme = ThemeData.light();
+    final materialDarkTheme = ThemeData.dark();
+
+    const darkDefaultCupertinoTheme =
+        CupertinoThemeData(brightness: Brightness.dark);
+    final cupertinoDarkTheme = MaterialBasedCupertinoThemeData(
+      materialTheme: materialDarkTheme.copyWith(
+        cupertinoOverrideTheme: CupertinoThemeData(
+          brightness: Brightness.dark,
+          barBackgroundColor: darkDefaultCupertinoTheme.barBackgroundColor,
+          textTheme: CupertinoTextThemeData(
+            primaryColor: Colors.white,
+            navActionTextStyle:
+                darkDefaultCupertinoTheme.textTheme.navActionTextStyle.copyWith(
+              color: const Color(0xF0F9F9F9),
+            ),
+            navLargeTitleTextStyle: darkDefaultCupertinoTheme
+                .textTheme.navLargeTitleTextStyle
+                .copyWith(color: const Color(0xF0F9F9F9)),
+          ),
+        ),
       ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        /* dark theme settings */
+    );
+    final cupertinoLightTheme =
+        MaterialBasedCupertinoThemeData(materialTheme: materialLightTheme);
+
+    return PlatformProvider(
+      settings: PlatformSettingsData(
+        iosUsesMaterialWidgets: true,
+        iosUseZeroPaddingForAppbarPlatformIcon: true,
       ),
-      themeMode: ThemeMode.system,
-      /* ThemeMode.system to follow system theme,
-         ThemeMode.light for light theme,
-         ThemeMode.dark for dark theme
-      */
-      debugShowCheckedModeBanner: false,
-      // theme: ThemeData(
-      //   colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      //   useMaterial3: true,
+      builder: (context) => PlatformTheme(
+        themeMode: themeMode,
+        materialLightTheme: materialLightTheme,
+        materialDarkTheme: materialDarkTheme,
+        cupertinoLightTheme: cupertinoLightTheme,
+        cupertinoDarkTheme: cupertinoDarkTheme,
+        matchCupertinoSystemChromeBrightness: true,
+        onThemeModeChanged: (themeMode) {
+          this.themeMode = themeMode; /* you can save to storage */
+        },
+        builder: (context) => PlatformApp(
+          localizationsDelegates: <LocalizationsDelegate<dynamic>>[
+            DefaultMaterialLocalizations.delegate,
+            DefaultWidgetsLocalizations.delegate,
+            DefaultCupertinoLocalizations.delegate,
+          ],
+          title: 'Flutter Platform Widgets',
+          home: Scaffold(
+            appBar: AppBar(title: Text("NyaaShows"),),
+            body: Column(children: [PlatformTextButton(onPressed: () {}, child: Text('Button'),)],),
+          ),
+        ),
+      ),
       // ),
-      home: const MyHomePage(title: 'NyaaShows'),
     );
   }
 }
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => home.MyHomePageState();
-}
-
-enum Menu { settings, trakt, about, realdebrid }

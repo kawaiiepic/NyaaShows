@@ -38,7 +38,6 @@ dependencies:
   cupertino_icons: ^1.0.6
   http: ^1.2.2
   url_launcher: ^6.3.0
-  flutter_web_auth_2: ^4.0.1
   path_provider: ^2.1.4
   html_parser_plus: ^0.1.4
   html: ^0.15.0
@@ -48,7 +47,7 @@ dependencies:
   video_player_media_kit: ^1.0.5
   media_kit_libs_android_video: any
   media_kit_libs_ios_video: any
-  media_kit_libs_macos_video: any
+  media_kit_libs_macos_video: ^1.1.4
   media_kit_libs_windows_video: any
   media_kit_libs_linux: any
   rust_lib_nyaashows:
@@ -56,6 +55,8 @@ dependencies:
   flutter_rust_bridge: 2.5.0
   flutter_discord_rpc: ^1.0.0
   flutter_svg: ^2.0.10+1
+  window_manager: ^0.4.3
+  flutter_platform_widgets: ^7.0.1
 
 dev_dependencies:
   flutter_test:

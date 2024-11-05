@@ -36,26 +36,6 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
-  http: ^1.2.2
-  url_launcher: ^6.3.0
-  path_provider: ^2.1.4
-  html_parser_plus: ^0.1.4
-  html: ^0.15.0
-  media_kit: ^1.1.11 # Primary package.
-  media_kit_video: ^1.2.5 # For video rendering.
-  media_kit_libs_video: ^1.0.5 # Native video dependencies.
-  video_player_media_kit: ^1.0.5
-  media_kit_libs_android_video: any
-  media_kit_libs_ios_video: any
-  media_kit_libs_macos_video: ^1.1.4
-  media_kit_libs_windows_video: any
-  media_kit_libs_linux: any
-  rust_lib_nyaashows:
-    path: rust_builder
-  flutter_rust_bridge: 2.5.0
-  flutter_discord_rpc: ^1.0.0
-  flutter_svg: ^2.0.10+1
-  window_manager: ^0.4.3
   flutter_platform_widgets: ^7.0.1
 
 dev_dependencies:

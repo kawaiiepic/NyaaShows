@@ -1,88 +1,15 @@
 PODS:
-  - flutter_discord_rpc (0.0.1):
-    - FlutterMacOS
   - FlutterMacOS (1.0.0)
-  - media_kit_libs_macos_video (1.0.4):
-    - FlutterMacOS
-  - media_kit_native_event_loop (1.0.0):
-    - FlutterMacOS
-  - media_kit_video (0.0.1):
-    - FlutterMacOS
-  - package_info_plus (0.0.1):
-    - FlutterMacOS
-  - path_provider_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - rust_lib_nyaashows (0.0.1):
-    - FlutterMacOS
-  - screen_brightness_macos (0.1.0):
-    - FlutterMacOS
-  - screen_retriever_macos (0.0.1):
-    - FlutterMacOS
-  - url_launcher_macos (0.0.1):
-    - FlutterMacOS
-  - wakelock_plus (0.0.1):
-    - FlutterMacOS
-  - window_manager (0.2.0):
-    - FlutterMacOS
 
 DEPENDENCIES:
-  - flutter_discord_rpc (from `Flutter/ephemeral/.symlinks/plugins/flutter_discord_rpc/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
-  - media_kit_libs_macos_video (from `Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos`)
-  - media_kit_native_event_loop (from `Flutter/ephemeral/.symlinks/plugins/media_kit_native_event_loop/macos`)
-  - media_kit_video (from `Flutter/ephemeral/.symlinks/plugins/media_kit_video/macos`)
-  - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
-  - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
-  - rust_lib_nyaashows (from `Flutter/ephemeral/.symlinks/plugins/rust_lib_nyaashows/macos`)
-  - screen_brightness_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_brightness_macos/macos`)
-  - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
-  - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
-  - wakelock_plus (from `Flutter/ephemeral/.symlinks/plugins/wakelock_plus/macos`)
-  - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
 EXTERNAL SOURCES:
-  flutter_discord_rpc:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_discord_rpc/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
-  media_kit_libs_macos_video:
-    :path: Flutter/ephemeral/.symlinks/plugins/media_kit_libs_macos_video/macos
-  media_kit_native_event_loop:
-    :path: Flutter/ephemeral/.symlinks/plugins/media_kit_native_event_loop/macos
-  media_kit_video:
-    :path: Flutter/ephemeral/.symlinks/plugins/media_kit_video/macos
-  package_info_plus:
-    :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
-  path_provider_foundation:
-    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
-  rust_lib_nyaashows:
-    :path: Flutter/ephemeral/.symlinks/plugins/rust_lib_nyaashows/macos
-  screen_brightness_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/screen_brightness_macos/macos
-  screen_retriever_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos
-  url_launcher_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos
-  wakelock_plus:
-    :path: Flutter/ephemeral/.symlinks/plugins/wakelock_plus/macos
-  window_manager:
-    :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
-  flutter_discord_rpc: 67a7c10ea24d9d3bf35d01af643f48fbcfa7c24f
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  media_kit_libs_macos_video: b3e2bbec2eef97c285f2b1baa7963c67c753fb82
-  media_kit_native_event_loop: 81fd5b45192b72f8b5b69eaf5b540f45777eb8d5
-  media_kit_video: c75b07f14d59706c775778e4dd47dd027de8d1e5
-  package_info_plus: f5790acc797bf17c3e959e9d6cf162cc68ff7523
-  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  rust_lib_nyaashows: e539aa1ff11e5a8e412224a8365da3cf26aa6a18
-  screen_brightness_macos: 2d6d3af2165592d9a55ffcd95b7550970e41ebda
-  screen_retriever_macos: 776e0fa5d42c6163d2bf772d22478df4b302b161
-  url_launcher_macos: c82c93949963e55b228a30115bd219499a6fe404
-  wakelock_plus: 4783562c9a43d209c458cb9b30692134af456269
-  window_manager: 3a1844359a6295ab1e47659b1a777e36773cd6e8
 
 PODFILE CHECKSUM: 236401fc2c932af29a9fcf0e97baeeb2d750d367
 

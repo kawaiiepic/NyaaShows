@@ -48,6 +48,7 @@ class _NyaaAppState extends State<NyaaApp> {
     final cupertinoLightTheme =
         MaterialBasedCupertinoThemeData(materialTheme: materialLightTheme);
 
+    print(MediaQuery.of(context).navigationMode);
     return PlatformProvider(
       settings: PlatformSettingsData(
         iosUsesMaterialWidgets: true,
@@ -70,9 +71,8 @@ class _NyaaAppState extends State<NyaaApp> {
             DefaultCupertinoLocalizations.delegate,
           ],
           title: 'Flutter Platform Widgets',
-          home: Scaffold(
-            appBar: AppBar(title: Text("NyaaShows"),),
-            body: Column(children: [PlatformTextButton(onPressed: () {}, child: Text('Button'),)],),
+          home: PlatformScaffold(
+            body: SafeArea(child: Column(children: [PlatformTextButton(onPressed: () {}, child: Text(MediaQuery.of(context).orientation.toString()),)],)),
           ),
         ),
       ),

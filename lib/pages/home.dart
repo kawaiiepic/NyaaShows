@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:nyaashows/data/trakt/profile.dart';
 import 'package:nyaashows/data/trakt/search/show.dart' as Search;
-import 'package:nyaashows/data/trakt/watched.dart';
 import 'package:nyaashows/data/trakt/watched_progress.dart';
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/pages/secondRoute.dart';

@@ -1,6 +1,5 @@
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/torrents/torrent_galaxy.dart';
-import 'package:nyaashows/torrents/tpb.dart';
 
 class TorrentHelper {
   static final List<TorrentEngine> _torrentEngines = [

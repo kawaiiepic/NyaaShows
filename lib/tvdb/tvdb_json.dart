@@ -37,7 +37,7 @@ class Data {
   String nextAired;
   int score;
   DataStatus status;
-  String originalCountry;
+  String? originalCountry;
   String originalLanguage;
   int defaultSeasonType;
   bool isOrderRandomized;

@@ -26,6 +26,7 @@ class Common {
 
   static Future<File> dirJson(String name) async {
     final directory = await getApplicationSupportDirectory();
+    print(directory.path);
     return File('${directory.path}/$name.json');
   }
 

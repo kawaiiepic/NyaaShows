@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../tmdb/tmdb.dart';
 import '../../trakt/json/combined_show.dart';
+import '../../trakt/json/enum/media_type.dart';
 import '../../trakt/json/enum/search_type.dart';
 import '../../trakt/json/search/search.dart' as json_search;
 import '../../trakt/json/shows/extended_show.dart';
@@ -65,10 +66,8 @@ class SearchState extends State {
                 break;
               }
 
-              var artwork = await TMDB.poster(entry.show!.ids!.tmdb!).onError(
-                    (error, stackTrace) => TVDB.showIcon(entry.show!.ids!.tvdb!).onError(
-                          (error, stackTrace) => "",
-                        ),
+              var artwork = await TMDB.poster(MediaType.show, entry.show!.ids!.tmdb!).onError(
+                    (error, stackTrace) => TVDB.artwork(entry.show!.ids!.tvdb!),
                   );
               ExtendedShow show = await TraktJson.extendedShowFromId(entry.show!.ids!.trakt!);
               WatchedProgress progress = await TraktJson.watchedProgress(entry.show!.ids!.trakt!);
@@ -79,11 +78,10 @@ class SearchState extends State {
                       onTap: () {
                         setState(() {
                           controller.closeView(entry.show!.title!);
-                          CombinedShow combinedShow = CombinedShow(show: Show.fromJson(show.toJson()), watchedProgress: progress);
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ShowExpanded(combinedShow: combinedShow),
+                                builder: (context) => ShowExpanded(show: Show.fromJson(show.toJson()), watchedProgress: progress),
                               ));
                         });
                       },
@@ -96,7 +94,7 @@ class SearchState extends State {
                               height: 100,
                               width: 60,
                               decoration: BoxDecoration(
-                                  image: DecorationImage(image: NetworkImage(artwork), fit: BoxFit.contain), borderRadius: BorderRadius.circular(10)),
+                                  image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.contain), borderRadius: BorderRadius.circular(10)),
                             ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,11 +150,7 @@ class SearchState extends State {
 
           List<Widget> options0 = [];
           for (var entry in options) {
-            var artwork = (await TMDB.poster(entry.show!.ids!.tmdb != null ? entry.show!.ids!.tmdb! : "0").onError(
-              (error, stackTrace) {
-                return "https://i.ebayimg.com/images/g/ypkAAOSwnYphk0fJ/s-l400.jpg";
-              },
-            ));
+            var artwork = (await TMDB.poster(MediaType.show, entry.show!.ids!.tmdb!));
 
             ExtendedShow show = (await TraktJson.extendedShowFromId(entry.show!.ids!.trakt!));
             WatchedProgress progress = (await TraktJson.watchedProgress(entry.show!.ids!.trakt!));
@@ -169,8 +163,8 @@ class SearchState extends State {
                     onTap: () {
                       setState(() {
                         controller.closeView(entry.show!.title!);
-                        var combinedShow = CombinedShow(show: Show.fromJson(show.toJson()), watchedProgress: progress);
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => ShowExpanded(combinedShow: combinedShow)));
+                        Navigator.push(
+                            context, MaterialPageRoute(builder: (context) => ShowExpanded(show: Show.fromJson(show.toJson()), watchedProgress: progress)));
                       });
                     },
                     child: Tooltip(
@@ -180,7 +174,7 @@ class SearchState extends State {
                               height: 100,
                               width: 60,
                               decoration: BoxDecoration(
-                                  image: DecorationImage(image: NetworkImage(artwork), fit: BoxFit.cover), borderRadius: BorderRadius.circular(10))),
+                                  image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.cover), borderRadius: BorderRadius.circular(10))),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [

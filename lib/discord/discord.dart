@@ -18,7 +18,6 @@ class Discord {
 
   static updatePresence(RPCActivity activity) {
     if (FlutterDiscordRPC.instance.isConnected) {
-      print(FlutterDiscordRPC.instance.isConnected);
       FlutterDiscordRPC.instance.setActivity(activity: activity);
     }
   }

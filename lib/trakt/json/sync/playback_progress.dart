@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../shows/show.dart';
 import '../utils/ids.dart';
 
 List<PlaybackProgress> playbackProgressFromJson(String str) => List<PlaybackProgress>.from(json.decode(str).map((x) => PlaybackProgress.fromJson(x)));
@@ -13,7 +14,7 @@ class PlaybackProgress {
   String type;
   Movie? movie;
   Episode? episode;
-  Movie? show;
+  Show? show;
 
   PlaybackProgress({
     required this.progress,
@@ -32,7 +33,7 @@ class PlaybackProgress {
         type: json["type"],
         movie: json["movie"] == null ? null : Movie.fromJson(json["movie"]),
         episode: json["episode"] == null ? null : Episode.fromJson(json["episode"]),
-        show: json["show"] == null ? null : Movie.fromJson(json["show"]),
+        show: json["show"] == null ? null : Show.fromJson(json["show"]),
       );
 
   Map<String, dynamic> toJson() => {

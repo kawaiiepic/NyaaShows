@@ -13,6 +13,7 @@ class TVDB {
   static Map<String, Uint8List> imageData = {};
 
   static Future<String> accessToken() async {
+    print('TVDB accessToken');
     // TODO: Save token to a local variable.
     final file = await Common.dirJson('tvdb');
 
@@ -55,18 +56,16 @@ class TVDB {
     }
   }
 
-  static Future<Uint8List?> artwork(String tvdb) async {
-    print('artwork');
+  static Future<Uint8List> artwork(String tvdb) async {
     if (imageData.containsKey(tvdb)) {
       return Future.value(imageData[tvdb]);
     }
-
     return imageData[tvdb] = await _artwork(tvdb);
   }
 
   static Future<Uint8List> _artwork(String tvdb) async {
     final directory = await getApplicationSupportDirectory();
-    final file = File('${directory.path}/cache/shows_artworks/$tvdb.jpg');
+    final file = File('${directory.path}/cache/tvdb/$tvdb.jpg');
 
     return await file.exists().then((exists) async {
       if (exists) {
@@ -87,10 +86,7 @@ class TVDB {
           file.createSync(recursive: true);
           file.writeAsBytes(art.bodyBytes);
 
-          return file.readAsBytes().then((bytes) {
-            imageData[tvdb] = bytes;
-            return bytes;
-          });
+          return art.bodyBytes;
         }
       }
       return Future.error(Exception());

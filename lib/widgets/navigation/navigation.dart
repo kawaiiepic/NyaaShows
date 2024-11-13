@@ -25,7 +25,9 @@ class _NavigationState extends State<Navigation> {
 
   Widget navigationRail() {
     return PlatformScaffold(
-        body: Row(children: [
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
       NavigationRail(
           labelType: NavigationRailLabelType.all,
           groupAlignment: 0,

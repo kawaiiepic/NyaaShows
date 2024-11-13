@@ -7,6 +7,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:http/http.dart';
 import 'package:nyaashows/trakt/json/sync/playback_progress.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,7 +31,7 @@ class TraktJson {
   static bool _nextUpLoaded = false;
   static Future<List<CombinedShow>> _nextUpFuture = Future.value([]);
   static List<HiddenItems> _hiddenShows = [];
-  static Future<List<PlaybackProgress>> _playbackProgressFuture = TraktJson._playbackProgress();
+  static Future<List<PlaybackProgress>> playbackProgressFuture = Future.value([]);
   static final Map<String, Show> _shows = {};
   static final Map<String, ExtendedShow> _extendedShows = {};
   static final Map<String, WatchedProgress> _progress = {};
@@ -41,7 +42,7 @@ class TraktJson {
     if (await hasAccessToken()) {
       showDialog(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (context) => PlatformAlertDialog(
                 title: const Text('trakt settings'),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -143,6 +144,7 @@ class TraktJson {
               };
 
               file.writeAsString(jsonEncode(data));
+              token = accessToken;
 
               // DataManager.traktData.storeToken(accessToken, tokenType, expiresIn, refreshToken, scope, createdAt);
               Navigator.pop(context, 'Submit');
@@ -188,6 +190,8 @@ class TraktJson {
                 ));
 
         final result = await completer.future;
+        playbackProgressFuture = Future.value([]);
+        _nextUpFuture = Future.value([]);
         print("Results obtained!");
       }
     }
@@ -258,7 +262,7 @@ class TraktJson {
       }
 
       var url = Uri.https('api.trakt.tv', '/scrobble/stop');
-      await post(url,
+      var response = await post(url,
           headers: {
             'Content-type': 'application/json',
             'Authorization': 'Bearer $token',
@@ -266,17 +270,24 @@ class TraktJson {
             'trakt-api-version': '2'
           },
           body: json.encode(object));
+
+      if (response.statusCode == 201) {
+        if (progress >= 80) {
+          removePlaybackItem(PlaybackProgress.fromJson(json.decode(response.body)));
+        }
+      }
+      print(response.statusCode);
+      print('Stop Watching: ${response.body}');
     }
   }
 
-  static Future<List<PlaybackProgress>> playbackProgress({forceReload = false}) async {
-    if ((await _playbackProgressFuture).isEmpty || forceReload) {
-      print('Changed _playbackProgressFuture');
+  static Future<List<PlaybackProgress>> playbackProgress({bool forceReload = false}) async {
+    if ((await playbackProgressFuture).isEmpty || forceReload) {
       Future<List<PlaybackProgress>> progress = _playbackProgress();
 
-      return _playbackProgressFuture = progress;
+      return playbackProgressFuture = progress;
     } else {
-      return _playbackProgressFuture;
+      return playbackProgressFuture;
     }
   }
 
@@ -306,11 +317,11 @@ class TraktJson {
     }
   }
 
-  static Future<void> removePlaybackItem(int id) async {
+  static Future<void> removePlaybackItem(PlaybackProgress playbackProgress) async {
     if (await hasAccessToken()) {
       final String token = await accessToken();
 
-      var url = Uri.https('api.trakt.tv', '/sync/playback/$id');
+      var url = Uri.https('api.trakt.tv', '/sync/playback/${playbackProgress.id}');
       var response = await delete(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -318,13 +329,11 @@ class TraktJson {
         'trakt-api-version': '2'
       });
 
-      print(response.statusCode + id);
-
       switch (response.statusCode) {
         case 204:
           {
-            print('Removed playback: $id');
-            playbackProgress(forceReload: true);
+            print('Removed playback: ${playbackProgress.id}');
+            (await playbackProgressFuture).remove(playbackProgress);
           }
 
         case 404:
@@ -433,6 +442,7 @@ class TraktJson {
 
   static Future<void> revolkToken() async {
     final file = await Common.dirJson('trakt');
+    token = null;
     file.exists().then((value) => file.delete());
   }
 
@@ -497,20 +507,26 @@ class TraktJson {
   }
 
   static Future<ExtendedProfile> _userProfile() async {
-    final token = await accessToken();
-    var url = Uri.https('api.trakt.tv', '/users/me', {'extended': 'full'});
-    var response = await get(url, headers: {
-      'Authorization': 'Bearer $token',
-      'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
-    });
+    if (await hasAccessToken()) {
+      final token = await accessToken();
+      var url = Uri.https('api.trakt.tv', '/users/me', {'extended': 'full'});
+      var response = await get(url, headers: {
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
+      });
 
-    if (response.statusCode == 200) {
-      final profile = profileFromJson(response.body);
+      if (response.statusCode == 200) {
+        final profile = profileFromJson(response.body);
 
-      return profile;
+        return profile;
+      } else {
+        return Future.error(UnknownStatusCode());
+      }
+    } else {
+      return Future.error(MissingTraktAccessToken);
     }
 
-    return Future.error(Exception('Failed to get users/me'));
+    // return Future.error(Exception('Failed to get users/me'));
   }
 
   static Future<List<CombinedShow>> nextUp({page = 0, forceReload = false}) async {

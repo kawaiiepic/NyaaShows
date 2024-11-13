@@ -8,6 +8,7 @@ import 'package:http/http.dart';
 import 'package:media_kit/media_kit.dart';
 import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
+import 'package:nyaashows/utils/exceptions.dart';
 
 import '../../../real-debrid/json/torrent_info.dart';
 import '../../../real-debrid/real_debrid.dart';
@@ -66,19 +67,23 @@ class TorrentLinksState extends State<TorrentLinks> {
                                     alignment: Alignment.center,
                                     child: TextButton(
                                         onPressed: () async {
-                                          var id = await _addMagnet(torrentFile.magnet);
-                                          if (_seachOverridden) {
-                                            var files = await _getFiles(id);
-                                            // if (files != null) {
-                                            Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => SelectFile(id: id, files: files, torrentEpisode: super.widget.torrentEpisode),
-                                                ));
-                                            // }
+                                          if (await RealDebrid.hasAccessToken()) {
+                                            var id = await _addMagnet(torrentFile.magnet);
+                                            if (_seachOverridden) {
+                                              var files = await _getFiles(id);
+                                              // if (files != null) {
+                                              Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => SelectFile(id: id, files: files, torrentEpisode: super.widget.torrentEpisode),
+                                                  ));
+                                              // }
+                                            } else {
+                                              progress = 0;
+                                              playTorrent(id, super.widget.torrentEpisode);
+                                            }
                                           } else {
-                                            progress = 0;
-                                            playTorrent(id, super.widget.torrentEpisode);
+                                            RealDebrid.login(context);
                                           }
                                         },
                                         onLongPress: () {
@@ -160,11 +165,11 @@ class TorrentLinksState extends State<TorrentLinks> {
         default:
           {
             print(response.body);
-            return Future.error(Exception('Unknown statusCode'));
+            return Future.error(UnknownStatusCode());
           }
       }
     } else {
-      return Future.error(Exception('Missing Real-Debrid access-token'));
+      return Future.error(MissingRealDebridAccessToken());
     }
   }
 

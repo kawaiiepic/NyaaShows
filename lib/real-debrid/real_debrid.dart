@@ -11,11 +11,11 @@ import '../main.dart';
 import '../utils/common.dart';
 
 class RealDebrid {
-  late Timer timer;
-  String? userCode;
+  static late Timer timer;
+  static String? userCode;
   static String? token;
 
-  Future<void> authentication(BuildContext context) async {
+  static Future<void> authentication(BuildContext context) async {
     final response = await get(Uri.https('api.real-debrid.com', '/oauth/v2/device/code', {'client_id': 'X245A4XAIBGVM', 'new_credentials': 'yes'}));
     if (response.statusCode == 200) {
       final Map json = jsonDecode(response.body);
@@ -26,7 +26,7 @@ class RealDebrid {
       int expiresIn = json['expires_in'];
       int interval = json['interval'];
 
-      this.userCode = userCode;
+      RealDebrid.userCode = userCode;
 
       NyaaShows.log('Connect the app with real-debrid at: $verificationUrl with code: [$userCode]');
 
@@ -70,7 +70,7 @@ class RealDebrid {
     }
   }
 
-  Future<Future> login(BuildContext context) async {
+  static Future<Future> login(BuildContext context) async {
     if (await RealDebrid.hasAccessToken()) {
       final token = await RealDebrid.accessToken();
 
@@ -94,7 +94,7 @@ class RealDebrid {
         ),
       );
     } else {
-      await NyaaShows.realDebrid.authentication(context);
+      await RealDebrid.authentication(context);
       return showDialog(
         context: context,
         builder: (context) => PlatformAlertDialog(
@@ -107,15 +107,15 @@ class RealDebrid {
                 },
                 child: const Text('Activate Page'),
               ),
-              Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Code: '), SelectableText(NyaaShows.realDebrid.userCode!)]),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('Code: '), SelectableText(RealDebrid.userCode!)]),
             ],
           ),
           actions: [
             PlatformTextButton(
               onPressed: () {
                 Navigator.pop(context, 'Cancel');
-                if (NyaaShows.realDebrid.timer.isActive) {
-                  NyaaShows.realDebrid.timer.cancel();
+                if (RealDebrid.timer.isActive) {
+                  RealDebrid.timer.cancel();
                 }
               },
               child: const Text('Cancel'),

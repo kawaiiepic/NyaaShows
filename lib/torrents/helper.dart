@@ -126,11 +126,11 @@ class TorrentHelper {
   }
 
   static bool _checkEpisode(String title, int episodeId) {
-      if (title.contains('E$episodeId') || title.contains('E00$episodeId') || title.contains('E0$episodeId')) {
-        return true;
-      } else {
-        return false;
-      }
+    if (title.contains('E$episodeId') || title.contains('E00$episodeId') || title.contains('E0$episodeId')) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   static bool _checkFileExtension(String filePath) {
@@ -164,7 +164,8 @@ class TorrentEpisode {
   int showYear;
   int episodeYear;
 
-  Ids ids;
+  Ids episodeIds;
+  Ids showIds;
 
   String showName;
   String episodeName;
@@ -178,7 +179,8 @@ class TorrentEpisode {
       required this.seasonName,
       required this.showYear,
       required this.episodeYear,
-      required this.ids});
+      required this.episodeIds,
+      required this.showIds});
 }
 
 abstract class TorrentEngine {

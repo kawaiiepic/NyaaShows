@@ -67,7 +67,8 @@ class EpisodesPage extends StatelessWidget {
                                                   seasonName: season.title,
                                                   showYear: show.year!,
                                                   episodeYear: show.year!,
-                                                  ids: snapshot.data![index].ids))));
+                                                  showIds: show.ids!,
+                                                  episodeIds: snapshot.data![index].ids))));
                                   // NyaaShows.trakt
                                   //     .episodeFromNumber(show: show.ids!.trakt, season: snapshot.data![index].season, episode: snapshot.data![index].number)
                                   //     .then((episode) {

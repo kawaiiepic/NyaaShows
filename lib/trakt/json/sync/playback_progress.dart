@@ -9,7 +9,7 @@ String playbackProgressToJson(List<PlaybackProgress> data) => json.encode(List<d
 
 class PlaybackProgress {
   double progress;
-  DateTime pausedAt;
+  DateTime? pausedAt;
   int id;
   String type;
   Movie? movie;
@@ -28,7 +28,7 @@ class PlaybackProgress {
 
   factory PlaybackProgress.fromJson(Map<String, dynamic> json) => PlaybackProgress(
         progress: json["progress"]?.toDouble(),
-        pausedAt: DateTime.parse(json["paused_at"]),
+        pausedAt: json["paused_at"] == null ? null : DateTime.parse(json["paused_at"]),
         id: json["id"],
         type: json["type"],
         movie: json["movie"] == null ? null : Movie.fromJson(json["movie"]),
@@ -38,7 +38,7 @@ class PlaybackProgress {
 
   Map<String, dynamic> toJson() => {
         "progress": progress,
-        "paused_at": pausedAt.toIso8601String(),
+        "paused_at": pausedAt?.toIso8601String(),
         "id": id,
         "type": type,
         "movie": movie?.toJson(),

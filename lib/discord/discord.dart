@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
 
 class Discord {
@@ -6,10 +8,15 @@ class Discord {
   int startEpoch = DateTime.now().millisecondsSinceEpoch;
 
   static init() async {
-    await FlutterDiscordRPC.initialize(
+    try {
+      await FlutterDiscordRPC.initialize(
       client_id,
     );
-    FlutterDiscordRPC.instance.connect();
+
+    await FlutterDiscordRPC.instance.connect();
+    } catch (e) {
+      log(e.toString());
+    }
   }
 
   static resetPresence() {

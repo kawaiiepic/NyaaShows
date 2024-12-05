@@ -39,10 +39,10 @@ class TMDB {
       if (images.posters != null && images.posters!.isNotEmpty) {
         return 'https://image.tmdb.org/t/p/original${images.posters![0].filePath!}';
       } else {
-        return Future.error(TMDBMissingPoster());
+        throw TMDBMissingPoster();
       }
     } else {
-      return Future.error(UnknownStatusCode());
+      throw Future.error(UnknownStatusCode());
     }
   }
 
@@ -74,9 +74,8 @@ class TMDB {
       if (response.statusCode == 200) {
         var images = Images.fromJson(jsonDecode(response.body));
 
-        print(images.posters![0].filePath);
-
         if (images.posters != null && images.posters!.isNotEmpty) {
+          print(images.posters?[0].filePath);
           var art = await get(Uri.parse('https://image.tmdb.org/t/p/original${images.posters![0].filePath!}'));
           print(images.posters![0].filePath!);
           file.createSync(recursive: true);
@@ -84,7 +83,8 @@ class TMDB {
 
           return art.bodyBytes;
         } else {
-          return Future.error(TMDBMissingPoster());
+          return Future.error(Exception('Missing Poster'));
+          throw TMDBMissingPoster();
         }
       } else {
         return Future.error(UnknownStatusCode());

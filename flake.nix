@@ -50,6 +50,7 @@
               sqlite.dev
               libpsl.dev
               nghttp2.dev
+              libepoxy
               # glib
               pcre2
               # cmake

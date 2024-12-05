@@ -8,11 +8,16 @@ class TorrentGalaxy extends TorrentEngine {
   String name = "TorrentGalaxy";
 
   @override
-  Future<List<TorrentFile>?> search(List<String> searchTerms) async {
+  Future<List<TorrentFile>?> search(List<String> searchTerms, {movie = false}) async {
     String url;
     List<TorrentFile> torrents = [];
     for (var term in searchTerms) {
-      var url = 'https://torrentgalaxy.one/get-posts/keywords:$term:category:Anime:category:Movies:category:TV';
+      String url;
+      if(movie){
+        url = 'https://torrentgalaxy.one/get-posts/keywords:$term:category:Anime:category:Movies';
+      } else {
+        url = 'https://torrentgalaxy.one/get-posts/keywords:$term:category:Anime:category:TV';
+      }
       print(url);
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {

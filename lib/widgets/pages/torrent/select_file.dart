@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:media_kit/media_kit.dart';
 import 'package:nyaashows/real-debrid/json/torrent_info.dart';
+import 'package:nyaashows/utils/exceptions.dart';
 
 import '../../../real-debrid/real_debrid.dart';
 import '../../../torrents/helper.dart';
 import '../../../utils/common.dart';
-import '../player/player.dart';
+import '../player/show_player.dart';
 
 class SelectFile extends StatefulWidget {
   const SelectFile({super.key, required this.id, required this.files, required this.torrentEpisode});
@@ -54,6 +56,7 @@ class SelectFileState extends State<SelectFile> {
   Future<String> _getLink(String id) async {
     if (await RealDebrid.hasAccessToken()) {
       final String token = await RealDebrid.accessToken();
+
       final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/info/$id');
       var response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
 
@@ -61,15 +64,54 @@ class SelectFileState extends State<SelectFile> {
         case 200:
           {
             final TorrentInfo torrentInfo = torrentInfoFromJson(response.body);
-            print(torrentInfo.links);
-            print(currentFileId);
-            return torrentInfo.links[currentFileId];
+            log(torrentInfo.status);
+            log(torrentInfo.progress.toString());
+
+            switch (torrentInfo.status) {
+              case 'queued':
+                {
+                  print('Still downloading...');
+                  var link = "";
+                  await Future.doWhile(() async {
+                    var newResponse = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+                    final TorrentInfo responseInfo = torrentInfoFromJson(newResponse.body);
+                    switch (newResponse.statusCode) {
+                      case 200:
+                        {
+                          switch (responseInfo.status) {
+                            case 'downloading':
+                              {
+                                print(responseInfo.progress);
+                              }
+                            case 'downloaded':
+                              {
+                                link = responseInfo.links[0];
+                              }
+                            default:
+                              {
+                                print(responseInfo.status);
+                              }
+                          }
+                        }
+                    }
+
+                    await Future.delayed(Duration(seconds: 5));
+                    return true;
+                  });
+
+                  return link;
+                }
+              case 'downloaded':
+                {
+                  return torrentInfo.links[0];
+                }
+            }
           }
-        default:
-          return Future.error(Exception('Unknown Status Code'));
       }
+
+      return "";
     } else {
-      return Future.error(Exception('Missing Access Token'));
+      return Future.error(MissingTraktAccessToken());
     }
   }
 
@@ -113,7 +155,9 @@ class SelectFileState extends State<SelectFile> {
 
             currentFileId = downloadsId;
 
-            var downloadIds = await _instantAvailable(torrentInfo.hash, downloadsId);
+            var downloadIds = await _instantAvailable(torrentInfo.hash, downloadsId).onError(
+              (error, stackTrace) => currentFileId.toString(),
+            );
 
             final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/selectFiles/$id');
             await http.post(url, headers: {'Authorization': 'Bearer $token'}, body: {'files': downloadIds});
@@ -130,15 +174,26 @@ class SelectFileState extends State<SelectFile> {
     var token = await RealDebrid.accessToken();
     final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/instantAvailability/$hash');
     var response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
-    Map<String, dynamic> json = jsonDecode(response.body)[hash];
 
-    var list = json['rd'] as List;
-    for (Map<String, dynamic> files in list) {
-      if (files.containsKey('$id')) {
-        return files.keys.join(',');
-      }
+    switch (response.statusCode) {
+      case 200:
+        {
+          Map<String, dynamic> json = jsonDecode(response.body)[hash];
+
+          var list = json['rd'] as List;
+          for (Map<String, dynamic> files in list) {
+            if (files.containsKey('$id')) {
+              return files.keys.join(',');
+            }
+          }
+
+          return Future.error(Exception('No instant downloads found!'));
+        }
+      default:
+        {
+          return Future.error(Exception('No instant downloads found!'));
+        }
     }
-    return Future.error(Exception('No instant downloads found!'));
   }
 
   Future<Map<String, dynamic>?> unrestrickLink({required String link, required TorrentEpisode torrentEpisode}) async {
@@ -154,7 +209,7 @@ class SelectFileState extends State<SelectFile> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => VideoPlayer(
+                builder: (context) => ShowPlayer(
                       media: Media(video),
                       torrentEpisode: torrentEpisode,
                     )));

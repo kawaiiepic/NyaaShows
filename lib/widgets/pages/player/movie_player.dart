@@ -15,20 +15,19 @@ import '../../../trakt/json/enum/media_type.dart';
 import '../../../trakt/trakt_json.dart';
 import '../../../tvdb/tvdb.dart';
 
-class VideoPlayer extends StatefulWidget {
+class MoviePlayer extends StatefulWidget {
   final Media media;
-  final TorrentEpisode torrentEpisode;
+  final TorrentMovie torrentMovie;
+  final double progress = 0;
 
-  const VideoPlayer({super.key, required this.media, required this.torrentEpisode});
+  const MoviePlayer({super.key, required this.media, required this.torrentMovie});
 
   @override
-  State<VideoPlayer> createState() => MyScreenState();
+  State<MoviePlayer> createState() => MyScreenState();
 }
 
-class MyScreenState extends State<VideoPlayer> {
-  // Create a [Player] to control playback.
+class MyScreenState extends State<MoviePlayer> {
   late final player = Player();
-  // Create a [VideoController] to handle video output from [Player].
   late final controller = VideoController(player);
 
   Timer? timer;
@@ -43,31 +42,32 @@ class MyScreenState extends State<VideoPlayer> {
 
     super.widget.media;
     player.open(super.widget.media);
-    TraktJson.startWatching(MediaType.show, {
-      "progress": "0",
-      "episode": {
-        "ids": {"trakt": super.widget.torrentEpisode.episodeIds.trakt}
+    TraktJson.startWatching(MediaType.movie, {
+      "progress": super.widget.progress,
+      "movie": {
+        "ids": {"trakt": super.widget.torrentMovie.ids.trakt}
       }
     });
 
     discordStartPoc = DateTime.now();
-    TMDB.posterUrl(MediaType.show, super.widget.torrentEpisode.showIds.tmdb!).then((var artwork) {
+
+    TMDB.posterUrl(MediaType.movie, super.widget.torrentMovie.ids.tmdb!).then((var artwork) {
       timer = Timer.periodic(const Duration(seconds: 3), (Timer t) {
         Discord.updatePresence(switch (player.state.playing) {
           true => RPCActivity(
               activityType: ActivityType.watching,
               assets: RPCAssets(
                 largeImage: artwork,
-                largeText: super.widget.torrentEpisode.showName,
+                largeText: super.widget.torrentMovie.movieName,
               ),
               buttons: [
                 RPCButton(
                     label: "trakt",
                     url:
-                        "https://trakt.tv/shows/${super.widget.torrentEpisode.showIds.trakt}/seasons/${super.widget.torrentEpisode.seasonId}/episodes/${super.widget.torrentEpisode.episodeId}"),
+                        "https://trakt.tv/movies/${super.widget.torrentMovie.ids.trakt}"),
               ],
-              details: '${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.episodeYear})',
-              state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
+              details: '${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})',
+              // state: '',
               timestamps: RPCTimestamps(
                 start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
                 end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
@@ -77,16 +77,16 @@ class MyScreenState extends State<VideoPlayer> {
               activityType: ActivityType.watching,
               assets: RPCAssets(
                 largeImage: artwork,
-                largeText: super.widget.torrentEpisode.showName,
+                largeText: super.widget.torrentMovie.movieName,
               ),
               buttons: [
                 RPCButton(
                     label: "trakt",
                     url:
-                        "https://trakt.tv/shows/${super.widget.torrentEpisode.showIds.trakt}/seasons/${super.widget.torrentEpisode.seasonId}/episodes/${super.widget.torrentEpisode.episodeId}"),
+                        "https://trakt.tv/movies/${super.widget.torrentMovie.ids.trakt}"),
               ],
-              details: '⏸️ ${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.showYear})',
-              state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
+              details: '⏸️ ${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})',
+              // state: '${super.widget.torrentEpisode!.seasonId}x${super.widget.torrentEpisode!.episodeId} ${super.widget.torrentEpisode!.episodeName}',
               timestamps: RPCTimestamps(
                 start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
                 end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
@@ -99,17 +99,17 @@ class MyScreenState extends State<VideoPlayer> {
     player.stream.playing.listen(
       (event) {
         if (event) {
-          TraktJson.startWatching(MediaType.show, {
+          TraktJson.startWatching(MediaType.movie, {
             "progress": progressPercentage(),
             "episode": {
-              "ids": {"trakt": super.widget.torrentEpisode.episodeIds.trakt}
+              "ids": {"trakt": super.widget.torrentMovie.ids.trakt}
             }
           });
         } else {
-          TraktJson.pauseWatching(MediaType.show, {
+          TraktJson.pauseWatching(MediaType.movie, {
             "progress": progressPercentage(),
             "episode": {
-              "ids": {"trakt": super.widget.torrentEpisode.episodeIds.trakt}
+              "ids": {"trakt": super.widget.torrentMovie.ids.trakt}
             }
           });
         }
@@ -118,15 +118,11 @@ class MyScreenState extends State<VideoPlayer> {
 
     player.stream.position.listen(
       (Duration position) {
-        progressPercentage();
         if (player.state.position.inSeconds / player.state.duration.inSeconds >= 0.8 && !finished) {
           finished = !finished;
-          TraktJson.stopWatching(MediaType.episode, 100, super.widget.torrentEpisode.episodeIds.trakt!);
+
+          TraktJson.stopWatching(MediaType.movie, 100, super.widget.torrentMovie.ids.trakt!);
         }
-        // }
-        // setState(() {
-        //   // Update UI.
-        // });
       },
     );
   }
@@ -148,7 +144,7 @@ class MyScreenState extends State<VideoPlayer> {
   @override
   void dispose() {
     if (!finished) {
-      TraktJson.stopWatching(MediaType.episode, progressPercentage(), super.widget.torrentEpisode.episodeIds.trakt!);
+      TraktJson.stopWatching(MediaType.movie, 0.0, super.widget.torrentMovie.ids.trakt!);
     }
     player.dispose();
     timer?.cancel();
@@ -239,11 +235,7 @@ class MyScreenState extends State<VideoPlayer> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${super.widget.torrentEpisode.showName} - S${super.widget.torrentEpisode.seasonId}:E${super.widget.torrentEpisode.episodeId}'),
-                Text(
-                  '${super.widget.torrentEpisode.episodeName} (${super.widget.torrentEpisode.episodeYear})', // (${super.widget.torrentEpisode.show.year})
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
-                )
+                PlatformText('${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})')
               ],
             ))
       ],

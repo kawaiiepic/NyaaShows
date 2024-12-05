@@ -8,7 +8,7 @@ class TorrentHelper {
     TorrentGalaxy()
   ];
 
-  static Future<List<TorrentFile>> search({required TorrentEpisode torrentEpisode, searchEverything = false}) async {
+  static Future<List<TorrentFile>> searchShow({required TorrentEpisode torrentEpisode, searchEverything = false}) async {
     List<TorrentFile> list = [];
     for (var torrentEngine in _torrentEngines) {
       List<TorrentFile>? torrentFiles;
@@ -16,8 +16,13 @@ class TorrentHelper {
         torrentFiles = await torrentEngine.search([(websiteSafeSearchTerm(torrentEpisode.showName))]);
       } else {
         torrentFiles = await torrentEngine.search([
-          "${websiteSafeSearchTerm(torrentEpisode.showName)} s${prettifyNumber(torrentEpisode.seasonId)}",
-          '${websiteSafeSearchTerm(torrentEpisode.showName)} season ${prettifyNumber(torrentEpisode.seasonId)}'
+          "${websiteSafeSearchTerm(torrentEpisode.showName)} S${prettifyNumber(torrentEpisode.seasonId)}E${prettifyNumber(torrentEpisode.episodeId)}",
+          "${websiteSafeSearchTerm(torrentEpisode.showName)} S${prettifyNumber(torrentEpisode.seasonId)}",
+          '${websiteSafeSearchTerm(torrentEpisode.showName)} season ${prettifyNumber(torrentEpisode.seasonId)}',
+          websiteSafeSearchTerm(torrentEpisode.showName)
+        ]);
+        torrentFiles = await torrentEngine.search([
+          (websiteSafeSearchTerm(torrentEpisode.showName)),
         ]);
       }
       if (torrentFiles != null) {
@@ -29,6 +34,25 @@ class TorrentHelper {
           } else {
             list.add(torrentFile);
           }
+        }
+      }
+    }
+
+    list.sort((a, b) => b.seeders!.compareTo(a.seeders!));
+
+    return list;
+  }
+
+  static Future<List<TorrentFile>> searchMovie({required TorrentMovie torrentMovie}) async {
+    List<TorrentFile> list = [];
+    for (var torrentEngine in _torrentEngines) {
+      List<TorrentFile>? torrentFiles;
+      torrentFiles = await torrentEngine.search([(websiteSafeSearchTerm(torrentMovie.movieName))], movie: true);
+      if (torrentFiles != null) {
+        for (var torrentFile in torrentFiles) {
+          torrentFile.provider = torrentEngine.name;
+          NyaaShows.log('Torrent Added: ${torrentFile.title}');
+          list.add(torrentFile);
         }
       }
     }
@@ -62,6 +86,21 @@ class TorrentHelper {
 
     print('Checking File: $filePath | $season $episode');
     if (fileExtension && title && season && episode) {
+      print('checkFile: $filePath');
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  static bool checkMovie(String filePath, TorrentMovie torrentMovie) {
+    bool fileExtension = _checkFileExtension(filePath);
+    bool title = _checkTitle(filePath, torrentMovie.movieName);
+
+    // NyaaShows.log('Path: ${filePath}, FileExtension: $fileExtension, Season: $season, Episode: $episode, title: $title');
+
+    print('Checking File: $filePath | $title $fileExtension');
+    if (fileExtension && title) {
       print('checkFile: $filePath');
       return true;
     } else {
@@ -158,6 +197,14 @@ class TorrentFile {
       required this.magnet});
 }
 
+class TorrentMovie {
+  int movieYear;
+  String movieName;
+  Ids ids;
+
+  TorrentMovie({required this.movieName, required this.movieYear, required this.ids});
+}
+
 class TorrentEpisode {
   int seasonId;
   int episodeId;
@@ -185,5 +232,5 @@ class TorrentEpisode {
 
 abstract class TorrentEngine {
   abstract String name;
-  Future<List<TorrentFile>?> search(List<String> searchTerms);
+  Future<List<TorrentFile>?> search(List<String> searchTerms, {movie = false});
 }

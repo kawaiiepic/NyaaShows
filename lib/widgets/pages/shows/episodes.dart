@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:nyaashows/torrents/helper.dart';
 import 'package:nyaashows/widgets/pages/torrent/torrent_links.dart';
 
 import '../../../trakt/json/enum/media_type.dart';
 import '../../../trakt/json/shows/extended_seasons.dart';
 import '../../../trakt/json/shows/extended_show.dart';
-import '../../../trakt/json/shows/show.dart';
 import '../../../trakt/trakt_json.dart';
 import '../../../utils/common.dart';
 
 class EpisodesPage extends StatelessWidget {
   const EpisodesPage({super.key, required this.show, required this.season});
 
-  final Show show;
+  final ExtendedShow show;
   final ExtendedSeason season;
 
   @override

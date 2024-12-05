@@ -17,9 +17,11 @@ import '../utils/exceptions.dart';
 import 'json/enum/search_type.dart';
 import 'json/combined_show.dart';
 import 'json/enum/media_type.dart';
+import 'json/movies/extended_movie.dart';
 import 'json/shows/extended_seasons.dart';
 import 'json/shows/extended_show.dart';
 import 'json/shows/season_episodes.dart';
+import 'json/shows/episode.dart' as ShowsEpisode;
 import 'json/shows/show.dart';
 import 'json/shows/watched_progress.dart';
 import 'json/sync/watched.dart';
@@ -28,13 +30,15 @@ import 'json/users/hidden_items.dart';
 import '../../trakt/json/search/search.dart' as json_search;
 
 class TraktJson {
-  static bool _nextUpLoaded = false;
-  static Future<List<CombinedShow>> _nextUpFuture = Future.value([]);
+  static final bool _nextUpLoaded = false;
+  static Future<List<Watched>> nextUpFuture = Future.value([]);
   static List<HiddenItems> _hiddenShows = [];
   static Future<List<PlaybackProgress>> playbackProgressFuture = Future.value([]);
   static final Map<String, Show> _shows = {};
   static final Map<String, ExtendedShow> _extendedShows = {};
-  static final Map<String, WatchedProgress> _progress = {};
+  static final Map<String, ExtendedMovie> _extendedMovies = {};
+  static final Map<String, Future<WatchedProgress>> progressFuture = {};
+  static final Map<String, Future<ShowsEpisode.Episode>> _episodeFuture = {};
   static ExtendedProfile? _profile;
   static String? token;
 
@@ -191,7 +195,7 @@ class TraktJson {
 
         final result = await completer.future;
         playbackProgressFuture = Future.value([]);
-        _nextUpFuture = Future.value([]);
+        nextUpFuture = Future.value([]);
         print("Results obtained!");
       }
     }
@@ -209,7 +213,7 @@ class TraktJson {
             'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
             'trakt-api-version': '2'
           },
-          body: json.encode(object));
+          body: jsonEncode(object));
     }
   }
 
@@ -229,13 +233,13 @@ class TraktJson {
     }
   }
 
-  static Future<void> stopWatching(MediaType mediaType, int progress, String traktId) async {
+  static Future<void> stopWatching(MediaType mediaType, double progress, String traktId) async {
     if (await hasAccessToken()) {
       final String token = await accessToken();
 
       print('Stop watching, progress: $progress');
 
-      var object;
+      Map<String, Object> object;
       switch (mediaType) {
         case MediaType.episode:
           {
@@ -262,6 +266,7 @@ class TraktJson {
       }
 
       var url = Uri.https('api.trakt.tv', '/scrobble/stop');
+      print(json.encode(object));
       var response = await post(url,
           headers: {
             'Content-type': 'application/json',
@@ -272,12 +277,58 @@ class TraktJson {
           body: json.encode(object));
 
       if (response.statusCode == 201) {
+        print(response.body);
         if (progress >= 80) {
-          removePlaybackItem(PlaybackProgress.fromJson(json.decode(response.body)));
+          removePlaybackItem(json.decode(response.body)['id']);
         }
       }
       print(response.statusCode);
       print('Stop Watching: ${response.body}');
+    }
+  }
+
+  static Future<void> addHistory(MediaType mediaType, String id) async {
+    if (await hasAccessToken()) {
+      final String token = await accessToken();
+
+      var url = Uri.https('api.trakt.tv', '/sync/history');
+
+      Map<String, List<Map<String, Map<String, String>>>> object;
+
+      switch (mediaType) {
+        case MediaType.episode:
+          {
+            object = {
+              'episodes': [
+                {
+                  'ids': {'trakt': id}
+                }
+              ]
+            };
+          }
+        case MediaType.movie:
+        // TODO: Handle this case.
+        case MediaType.show:
+        // TODO: Handle this case.
+        case MediaType.season:
+        // TODO: Handle this case.
+        case MediaType.person:
+        // TODO: Handle this case.
+        case MediaType.user:
+        // TODO: Handle this case.
+      }
+      var response = await post(url,
+          headers: {
+            'Content-type': 'application/json',
+            'Authorization': 'Bearer $token',
+            'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
+            'trakt-api-version': '2'
+          },
+          body: json.encode(object));
+
+      await Future.delayed(Duration(seconds: 5));
+
+      nextUpFuture = Future.value([]);
     }
   }
 
@@ -317,11 +368,11 @@ class TraktJson {
     }
   }
 
-  static Future<void> removePlaybackItem(PlaybackProgress playbackProgress) async {
+  static Future<void> removePlaybackItem(int id) async {
     if (await hasAccessToken()) {
       final String token = await accessToken();
 
-      var url = Uri.https('api.trakt.tv', '/sync/playback/${playbackProgress.id}');
+      var url = Uri.https('api.trakt.tv', '/sync/playback/$id');
       var response = await delete(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -332,8 +383,14 @@ class TraktJson {
       switch (response.statusCode) {
         case 204:
           {
-            print('Removed playback: ${playbackProgress.id}');
-            (await playbackProgressFuture).remove(playbackProgress);
+            print('Removed playback: $id');
+            (await playbackProgressFuture).forEach(
+              (playbackProgress) async {
+                if (playbackProgress.id == id) {
+                  (await playbackProgressFuture).remove(playbackProgress);
+                }
+              },
+            );
           }
 
         case 404:
@@ -342,9 +399,9 @@ class TraktJson {
     }
   }
 
-  static Future<List<json_search.Search>> search(SearchType type, String query) async {
+  static Future<List<json_search.SearchResults>> search(List<SearchType> type, String query) async {
     return accessToken().then((token) async {
-      var url = Uri.https('api.trakt.tv', '/search/show', {'query': query});
+      var url = Uri.https('api.trakt.tv', '/search/${type.asNameMap().keys.join(',')}', {'query': query});
       var response = await get(url, headers: {
         'Content-type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -352,15 +409,15 @@ class TraktJson {
         'trakt-api-version': '2'
       });
 
-      List<json_search.Search> entries = [];
+      List<json_search.SearchResults> entries = [];
 
       if (response.statusCode == 200) {
         var int = 0;
         for (var boop in jsonDecode(response.body)) {
-          if (int == 4) {
-            break;
+          if (int == 8) {
+            // break;
           }
-          json_search.Search entry = json_search.Search.fromJson(boop);
+          json_search.SearchResults entry = json_search.SearchResults.fromJson(boop);
           entries.add(entry);
           int++;
         }
@@ -431,6 +488,40 @@ class TraktJson {
           {
             var show = ExtendedShow.fromJson(jsonDecode(response.body));
             return show;
+          }
+        default:
+          return Future.error(UnknownStatusCode());
+      }
+    } else {
+      return Future.error(MissingTraktAccessToken);
+    }
+  }
+
+  static Future<ExtendedMovie> extendedMovieFromId(String id) async {
+    if (_extendedMovies.containsKey(id)) {
+      return _extendedMovies[id]!;
+    } else {
+      final ExtendedMovie extendedShow = await _extendedMovieFromId(id);
+      return _extendedMovies[id] = extendedShow;
+    }
+  }
+
+  static Future<ExtendedMovie> _extendedMovieFromId(String id) async {
+    if (await hasAccessToken()) {
+      final String token = await accessToken();
+
+      var url = Uri.https('api.trakt.tv', '/movies/$id', {'extended': 'full'});
+      var response = await get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
+        'trakt-api-version': '2'
+      });
+
+      switch (response.statusCode) {
+        case 200:
+          {
+            return ExtendedMovie.fromJson(jsonDecode(response.body));
           }
         default:
           return Future.error(UnknownStatusCode());
@@ -529,76 +620,48 @@ class TraktJson {
     // return Future.error(Exception('Failed to get users/me'));
   }
 
-  static Future<List<CombinedShow>> nextUp({page = 0, forceReload = false}) async {
-    if ((await _nextUpFuture).isEmpty || forceReload) {
-      Future<List<CombinedShow>> shows = _nextUp(page: page);
+  static Future<List<Watched>> nextUp({forceReload = false}) async {
+    if ((await nextUpFuture).isEmpty || forceReload) {
+      Future<List<Watched>> shows = _nextUp();
 
-      return _nextUpFuture = shows;
+      return nextUpFuture = shows;
     } else {
-      return _nextUpFuture;
+      return nextUpFuture;
     }
   }
 
-  static Future<List<CombinedShow>> _nextUp({page = 0}) async {
-    print('Next Up');
-    var token = await accessToken();
-    //TODO: Implement Hidden Shows. https://trakt.docs.apiary.io/#reference/users/hidden-items/get-hidden-items
-    var url = Uri.https('api.trakt.tv', '/sync/watched/shows', {'extended': 'noseasons'});
-    var response = await get(url, headers: {
-      'Content-type': 'application/json',
-      'Authorization': 'Bearer $token',
-      'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
-      'trakt-api-version': '2'
-    });
+  static Future<List<Watched>> _nextUp() async {
+    if (await hasAccessToken()) {
+      var token = await accessToken();
 
-    if (response.statusCode == 200) {
-      // print(jsonDecode(response.body)[0]);
-      var watched = watchedFromJson(response.body);
-      var hidden = (await hiddenShows());
+      var url = Uri.https('api.trakt.tv', '/sync/watched/shows', {'extended': 'full'});
+      var response = await get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
+        'trakt-api-version': '2'
+      });
 
-      List<CombinedShow> shows = [];
+      if (response.statusCode == 200) {
+        var watched = watchedFromJson(response.body);
 
-      var startInt = 20 * page; // 1st page (0-9), 2nd page (10-19)
-      var endInt = startInt + 19;
-      var currentInt = 0;
+        List<Watched> shows = [];
 
-      for (var show in watched) {
-        var traktId = show.show.ids!.trakt;
-        var skip = false;
-
-        for (var hide in hidden) {
-          if (hide.show!.ids!.trakt == show.show.ids!.trakt) {
-            skip = true;
+        for (var show in watched) {
+          int episodes = 0;
+          for (var element in show.seasons) {
+            episodes += element.episodes.length;
+          }
+          if (show.show.airedEpisodes! > episodes) {
+            shows.add(show);
           }
         }
-
-        if (skip) {
-          continue;
-        }
-
-        var url2 = Uri.https('api.trakt.tv', '/shows/$traktId/progress/watched');
-        var response2 = await get(url2, headers: {
-          'Content-type': 'application/json',
-          'Authorization': 'Bearer $token',
-          'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
-          'trakt-api-version': '2'
-        });
-
-        if (response2.statusCode == 200) {
-          var watchedProgress = watchedProgressFromJson(response2.body);
-          if (watchedProgress.aired != watchedProgress.completed && watchedProgress.nextEpisode != null) {
-            if (currentInt >= startInt && currentInt <= endInt) {
-              shows.add(CombinedShow(show: show.show, watchedProgress: watchedProgress));
-            } else if (currentInt > endInt) {
-              break;
-            }
-            currentInt++;
-          }
-        }
+        return shows;
+      } else {
+        return Future.error(Exception('Unable to obtain Next Up'));
       }
-      return shows;
     } else {
-      return Future.error(Exception('Unable to obtain Next Up'));
+      return Future.error(MissingTraktAccessToken());
     }
   }
 
@@ -611,7 +674,6 @@ class TraktJson {
   }
 
   static Future<List<HiddenItems>> __hiddenShows() async {
-    print('Hidden Shows');
     var token = (await accessToken());
     var url = Uri.https('api.trakt.tv', '/users/hidden/progress_watched', {'type': 'show'});
     var response = await get(url, headers: {
@@ -629,11 +691,11 @@ class TraktJson {
     }
   }
 
-  static Future<WatchedProgress> watchedProgress(String id) async {
-    if (_progress.containsKey(id)) {
-      return _progress[id]!;
+  static Future<WatchedProgress> watchedProgress(String id, {refresh = false}) async {
+    if (progressFuture.containsKey(id) && refresh == false) {
+      return progressFuture[id]!;
     } else {
-      return _progress[id] = await _watchedProgress(id);
+      return progressFuture[id] = _watchedProgress(id);
     }
   }
 
@@ -690,6 +752,35 @@ class TraktJson {
       return seasonEpisodesFromJson(response.body);
     } else {
       return Future.error(Exception());
+    }
+  }
+
+  static Future<ShowsEpisode.Episode> episode(id, season, episode) async {
+    if (_episodeFuture.containsKey(id)) {
+      return _episodeFuture[id]!;
+    } else {
+      return _episodeFuture[id] = _episode(id, season, episode);
+    }
+  }
+
+  static Future<ShowsEpisode.Episode> _episode(id, season, episode) async {
+    if (await hasAccessToken()) {
+      final token = await accessToken();
+      final url = Uri.https('api.trakt.tv', '/shows/$id/seasons/$season/episodes/$episode');
+      final response = await get(url, headers: {
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
+        'trakt-api-version': '2'
+      });
+
+      if (response.statusCode == 200) {
+        return ShowsEpisode.episodeFromJson(response.body);
+      } else {
+        return Future.error(UnknownStatusCode());
+      }
+    } else {
+      return Future.error(MissingTraktAccessToken());
     }
   }
 }

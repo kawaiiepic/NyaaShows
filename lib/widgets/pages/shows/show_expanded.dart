@@ -2,19 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 
+import '../../../torrents/helper.dart';
 import '../../../trakt/json/combined_show.dart';
+import '../../../trakt/json/shows/extended_show.dart';
 import '../../../trakt/json/shows/show.dart';
 import '../../../trakt/json/shows/watched_progress.dart';
 import '../../../trakt/trakt_json.dart';
 import '../../../utils/common.dart';
+import '../torrent/torrent_links.dart';
 import 'episodes.dart';
+import '../../../trakt/json/shows/episode.dart' as ShowsEpisode;
 
 class ShowExpanded extends StatelessWidget {
-  const ShowExpanded({super.key, this.watchedProgress, required this.show});
+  const ShowExpanded({super.key, this.watchedProgress, required this.show, this.episode});
 
   // final CombinedShow combinedShow;
   final WatchedProgress? watchedProgress;
-  final Show show;
+  final ShowsEpisode.Episode? episode;
+  final ExtendedShow show;
 
   @override
   Widget build(BuildContext context) {
@@ -26,27 +31,71 @@ class ShowExpanded extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final seasons = snapshot.data;
-            if(watchedProgress != null){
+            FutureBuilder<ShowsEpisode.Episode> futureBuilder;
+
+            if (episode != null) {
               return Column(
                 children: [
                   const Text('Next Up:'),
-                  TextButton(
-                      onPressed: () {
-                        
-                      },
-                      child: Text(
-                          'S${watchedProgress!.nextEpisode?.season}:E${watchedProgress!.nextEpisode?.number} - ${watchedProgress!.nextEpisode?.title}')),
+                  Text('S${episode!.season}:E${episode!.number} - ${episode!.title}'),
                   const Text('Seasons:'),
                   Expanded(child: listBuilder(seasons))
                 ],
               );
             } else {
-              return Column(
-                children: [
-                  const Text('Seasons:'),
-                  Expanded(child: listBuilder(seasons))
-                ],
-              );
+              if (watchedProgress != null) {
+                outerLoop:
+                for (var season in watchedProgress!.seasons) {
+                  for (var episode in season.episodes) {
+                    if (watchedProgress!.resetAt != null &&
+                        episode.lastWatchedAt != null &&
+                        DateTime.parse(episode.lastWatchedAt).compareTo(DateTime.parse(watchedProgress!.resetAt)) < 0) {
+                      futureBuilder = FutureBuilder(
+                        future: TraktJson.episode(show.ids!.trakt, season.number, episode.number),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            var episode = snapshot.data!;
+                            return Text('S${episode.season}:E${episode.number} - ${episode.title}');
+                          } else if (snapshot.hasError) {
+                            return Common.error();
+                          } else {
+                            return Common.loading();
+                          }
+                        },
+                      );
+                      break outerLoop;
+                    }
+                  }
+                }
+
+                if (watchedProgress!.resetAt != null) {
+                  return Column(
+                    children: [const Text('Next Up:'), futureBuilder, const Text('Seasons:'), Expanded(child: listBuilder(seasons))],
+                  );
+                } else if (watchedProgress!.lastWatchedAt != null) {
+                  return Column(
+                    children: [
+                      const Text('Next Up:'),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.push(context, platformPageRoute(context: context, builder:(context) => TorrentLinks(torrentEpisode: TorrentEpisode(showName: show.title!, seasonId: watchedProgress!.nextEpisode!.season, episodeId: watchedProgress!.nextEpisode!.number, episodeName: '', seasonName: '', showYear: 0, episodeYear: 0, episodeIds: watchedProgress!.nextEpisode!.ids, showIds: show.ids!),),));
+                          },
+                          child: Text(
+                              'S${watchedProgress!.nextEpisode?.season}:E${watchedProgress!.nextEpisode?.number} - ${watchedProgress!.nextEpisode?.title}')),
+                      const Text('Seasons:'),
+                      Expanded(child: listBuilder(seasons))
+                    ],
+                  );
+                } else {
+                  return Column(
+                    children: [const Text('Seasons:'), Expanded(child: listBuilder(seasons))],
+                  );
+                }
+              } else {
+                return Column(
+                  children: [const Text('Seasons:'), Expanded(child: listBuilder(seasons))],
+                );
+              }
             }
           } else if (snapshot.hasError) {
             return Common.error();

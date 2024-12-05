@@ -7,9 +7,8 @@ class Movies extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-        child: Column(
+    return Column(
       children: [Center(child: Search()), Text('Movies')],
-    ));
+    );
   }
 }

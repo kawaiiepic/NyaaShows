@@ -8,9 +8,8 @@ class Profile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-        child: Column(
+    return Column(
       children: [PopupMenu()],
-    ));
+    );
   }
 }

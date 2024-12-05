@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../trakt/json/enum/media_type.dart';
 import '../utils/common.dart';
 import 'tvdb_json.dart';
 
@@ -56,7 +57,7 @@ class TVDB {
     }
   }
 
-  static Future<Uint8List> artwork(String tvdb) async {
+  static Future<Uint8List> artwork(MediaType mediaType, String tvdb) async {
     if (imageData.containsKey(tvdb)) {
       return Future.value(imageData[tvdb]);
     }
@@ -67,29 +68,33 @@ class TVDB {
     final directory = await getApplicationSupportDirectory();
     final file = File('${directory.path}/cache/tvdb/$tvdb.jpg');
 
-    return await file.exists().then((exists) async {
-      if (exists) {
-        return file.readAsBytes().then((Uint8List bytes) {
-          imageData[tvdb] = bytes;
-          return bytes;
-        });
+    var exists = await file.exists();
+
+    if (exists) {
+      return file.readAsBytes().then((Uint8List bytes) {
+        imageData[tvdb] = bytes;
+        return bytes;
+      });
+    } else {
+      final url = Uri.https('api4.thetvdb.com', '/v4/series/$tvdb/artworks');
+      var response = await get(
+        url,
+        headers: {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer ${await accessToken()}'},
+      );
+
+      if (response.statusCode == 200) {
+        var artwork = TvdbArtwork.fromJson(jsonDecode(response.body));
+        var art = await get(Uri.parse(artwork.data.image));
+        file.createSync(recursive: true);
+        file.writeAsBytes(art.bodyBytes);
+
+        return art.bodyBytes;
       } else {
-        final url = Uri.https('api4.thetvdb.com', '/v4/series/$tvdb/artworks');
-        var response = await get(
-          url,
-          headers: {'accept': 'application/json', 'Content-Type': 'application/json', 'Authorization': 'Bearer ${await accessToken()}'},
-        );
-
-        if (response.statusCode == 200) {
-          var artwork = TvdbArtwork.fromJson(jsonDecode(response.body));
-          var art = await get(Uri.parse(artwork.data.image));
-          file.createSync(recursive: true);
-          file.writeAsBytes(art.bodyBytes);
-
-          return art.bodyBytes;
-        }
+        print(response.body);
       }
-      return Future.error(Exception());
-    });
+    }
+
+
+    throw Future.error(Exception());
   }
 }

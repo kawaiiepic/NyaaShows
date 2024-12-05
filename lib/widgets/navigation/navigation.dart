@@ -51,6 +51,6 @@ class _NavigationState extends State<Navigation> {
   }
 
   Widget page() {
-    return [Dashboard(), Shows(), Movies(), Calendar(), Profile()][_selectedIndex];
+    return [Expanded(child: Dashboard()), Shows(), Movies(), Calendar(), Profile()][_selectedIndex];
   }
 }

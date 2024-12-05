@@ -1,17 +1,22 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../main.dart';
 import '../../tmdb/tmdb.dart';
 import '../../trakt/json/combined_show.dart';
 import '../../trakt/json/enum/media_type.dart';
 import '../../trakt/json/enum/search_type.dart';
+import '../../trakt/json/movies/extended_movie.dart';
 import '../../trakt/json/search/search.dart' as json_search;
 import '../../trakt/json/shows/extended_show.dart';
 import '../../trakt/json/shows/show.dart';
 import '../../trakt/json/shows/watched_progress.dart';
 import '../../trakt/trakt_json.dart';
 import '../../tvdb/tvdb.dart';
+import '../pages/movies/movie_expanded.dart';
 import '../pages/shows/show_expanded.dart';
 
 class Search extends StatefulWidget {
@@ -24,8 +29,7 @@ class Search extends StatefulWidget {
 class SearchState extends State {
   String? _searchingWithQuery;
   Iterable<Widget> _lastOptions = <Widget>[];
-  Map<String, Iterable<Widget>> _searchResults = {};
-  String _lastSearchQuery = "";
+  final String _lastSearchQuery = "";
 
   @override
   Widget build(BuildContext context) {
@@ -45,75 +49,156 @@ class SearchState extends State {
           suggestionsBuilder: (context, controller) async {
             _searchingWithQuery = controller.text;
 
+            await Future.delayed(Duration(seconds: 1));
+
             if (_searchingWithQuery != controller.text) {
               return _lastOptions;
             }
 
-            if (_lastSearchQuery == _searchingWithQuery) {
+            if (_lastSearchQuery == _searchingWithQuery && _lastSearchQuery != "") {
               return _lastOptions;
             }
 
-            if (_searchResults.containsKey(_searchingWithQuery)) {
-              return _searchResults[_searchingWithQuery]!;
-            }
-
-            final List<json_search.Search> options = await TraktJson.search(SearchType.show, _searchingWithQuery!);
+            final List<json_search.SearchResults> options =
+                await TraktJson.search([SearchType.show, SearchType.movie, SearchType.person], _searchingWithQuery!);
 
             List<Widget> options0 = [];
+
+            List<Widget> persons = [];
+            List<Widget> movies = [];
+            List<Widget> shows = [];
             var int = 0;
+
             for (var entry in options) {
-              if (int == 5) {
-                break;
+              if (entry.type == "person") {
+                Widget container = Text(entry.person!.name);
+                persons.add(container);
               }
 
-              var artwork = await TMDB.poster(MediaType.show, entry.show!.ids!.tmdb!).onError(
-                    (error, stackTrace) => TVDB.artwork(entry.show!.ids!.tvdb!),
-                  );
-              ExtendedShow show = await TraktJson.extendedShowFromId(entry.show!.ids!.trakt!);
-              WatchedProgress progress = await TraktJson.watchedProgress(entry.show!.ids!.trakt!);
+              if (entry.type == "movie") {
+                Uint8List? artwork = await TMDB
+                    .poster(MediaType.movie, entry.movie!.ids.tmdb!)
+                    .onError((error, stackTrace) => TVDB.artwork(MediaType.movie, entry.movie!.ids.tvdb!).onError(
+                          (error, stackTrace) {
+                            return Uint8List(0);
+                          },
+                        ));
 
-              Widget container = Container(
-                  padding: EdgeInsets.all(8),
-                  child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          controller.closeView(entry.show!.title!);
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ShowExpanded(show: Show.fromJson(show.toJson()), watchedProgress: progress),
-                              ));
-                        });
-                      },
-                      child: Tooltip(
-                        message: entry.show!.title!,
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Ink(
-                              height: 100,
-                              width: 60,
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.contain), borderRadius: BorderRadius.circular(10)),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('${entry.show!.title!} (${entry.show!.year?.toString()})'),
-                                Text(
-                                  show.genres!.join(', '),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                )
-                              ],
-                            )
-                          ],
-                        ),
-                      )));
+                ExtendedMovie movie = await TraktJson.extendedMovieFromId(entry.movie!.ids.trakt!);
 
-              options0.add(container);
-              _searchResults[_searchingWithQuery!] = options0;
-              int++;
+                Widget container = Container(
+                    padding: EdgeInsets.all(8),
+                    child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () async {
+                          controller.closeView(movie.title);
+                          NyaaShows.navigatorKey.currentState!.push(MaterialPageRoute(
+                            builder: (context) => MovieExpanded(movie: movie),
+                          ));
+                        },
+                        child: Tooltip(
+                          message: entry.movie!.title,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Ink(
+                                height: 100,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                    image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.cover), borderRadius: BorderRadius.circular(10)),
+                              ),
+                              Container(
+                                width: 20,
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('${entry.movie!.title} (${entry.movie!.year?.toString()})'),
+                                  Text(
+                                    movie.genres.join(', '),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                ],
+                              )
+                            ],
+                          ),
+                        )));
+
+                movies.add(container);
+              }
+
+              if (entry.type == "show") {
+                Uint8List? artwork = await TMDB
+                    .poster(MediaType.show, entry.show!.ids.tmdb!)
+                    .onError((error, stackTrace) => TVDB.artwork(MediaType.show, entry.show!.ids.tvdb!).onError(
+                          (error, stackTrace) {
+                            return Uint8List(0);
+                          },
+                        ));
+                ExtendedShow show = await TraktJson.extendedShowFromId(entry.show!.ids.trakt!);
+                // WatchedProgress progress = await TraktJson.watchedProgress(entry.show!.ids!.trakt!);
+
+                Widget container = Container(
+                    padding: EdgeInsets.all(8),
+                    child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () async {
+                          controller.closeView(show.title);
+                          WatchedProgress progress = await TraktJson.watchedProgress(entry.show!.ids.trakt!);
+                          NyaaShows.navigatorKey.currentState!.push(MaterialPageRoute(
+                            builder: (context) => ShowExpanded(show: show, watchedProgress: progress,),
+                          ));
+                        },
+                        child: Tooltip(
+                          message: entry.show!.title,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Ink(
+                                height: 100,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                    image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.cover), borderRadius: BorderRadius.circular(10)),
+                              ),
+                              Container(
+                                width: 20,
+                              ),
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${entry.show!.title} (${entry.show!.year?.toString()})',
+                                  ),
+                                  Text(
+                                    show.genres!.join(', '),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                                ],
+                              )
+                            ],
+                          ),
+                        )));
+
+                shows.add(container);
+              }
+            }
+
+            if (shows.isNotEmpty) {
+              options0.add(Text('Shows'));
+              options0.addAll(shows);
+            }
+
+            if (movies.isNotEmpty) {
+              options0.add(Text('Movies'));
+              options0.addAll(movies);
+            }
+
+            if (persons.isNotEmpty) {
+              options0.add(Text('Persons'));
+              options0.addAll(persons);
             }
 
             _lastOptions = options0;
@@ -121,79 +206,5 @@ class SearchState extends State {
             return _lastOptions;
           },
         ));
-  }
-
-  Widget searchWidget() {
-    return SearchAnchor(
-        viewLeading: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            child: SvgPicture.asset(
-              'assets/trakt-logo.svg',
-              width: 20,
-              height: 20,
-            )),
-        builder: (context, controller) {
-          return IconButton(
-              onPressed: () {
-                controller.openView();
-              },
-              icon: Icon(Icons.search_rounded));
-        },
-        suggestionsBuilder: (context, controller) async {
-          _searchingWithQuery = controller.text;
-
-          final List<json_search.Search> options = (await TraktJson.search(SearchType.show, _searchingWithQuery!)).toList();
-
-          if (_searchingWithQuery != controller.text) {
-            return _lastOptions;
-          }
-
-          List<Widget> options0 = [];
-          for (var entry in options) {
-            var artwork = (await TMDB.poster(MediaType.show, entry.show!.ids!.tmdb!));
-
-            ExtendedShow show = (await TraktJson.extendedShowFromId(entry.show!.ids!.trakt!));
-            WatchedProgress progress = (await TraktJson.watchedProgress(entry.show!.ids!.trakt!));
-
-            Widget container;
-
-            container = Container(
-                padding: EdgeInsets.all(8),
-                child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        controller.closeView(entry.show!.title!);
-                        Navigator.push(
-                            context, MaterialPageRoute(builder: (context) => ShowExpanded(show: Show.fromJson(show.toJson()), watchedProgress: progress)));
-                      });
-                    },
-                    child: Tooltip(
-                        message: entry.show!.title!,
-                        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Ink(
-                              height: 100,
-                              width: 60,
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.cover), borderRadius: BorderRadius.circular(10))),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('${entry.show!.title!} (${entry.show!.year?.toString()})'),
-                              Text(
-                                show.genres!.join(', '),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          )
-                        ]))));
-
-            options0.add(container);
-          }
-
-          _lastOptions = options0;
-
-          return _lastOptions;
-        });
   }
 }

@@ -15,13 +15,12 @@ class _ShowsState extends State<Shows> {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-        child: Column(
+    return Column(
       children: [
         Center(child: Search()),
         Text('Dashboard'),
 
       ],
-    ));
+    );
   }
 }

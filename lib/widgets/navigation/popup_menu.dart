@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:nyaashows/trakt/trakt_json.dart';
 
-import '../../main.dart';
 import '../../real-debrid/real_debrid.dart';
 
 class PopupMenu extends StatelessWidget {

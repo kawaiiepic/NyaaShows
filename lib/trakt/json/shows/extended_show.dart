@@ -15,7 +15,7 @@ class ExtendedShow {
   String? network;
   String? country;
   DateTime? updatedAt;
-  dynamic trailer;
+  String? trailer;
   String? homepage;
   String? status;
   double? rating;
@@ -55,30 +55,32 @@ class ExtendedShow {
 
   String toRawJson() => json.encode(toJson());
 
-  factory ExtendedShow.fromJson(Map<String, dynamic> json) => ExtendedShow(
-        title: json["title"],
-        year: json["year"],
-        ids: json["ids"] == null ? null : Ids.fromJson(json["ids"]),
-        tagline: json["tagline"],
-        overview: json["overview"],
-        firstAired: json["first_aired"] == null ? null : DateTime.parse(json["first_aired"]),
-        airs: json["airs"] == null ? null : Airs.fromJson(json["airs"]),
-        runtime: json["runtime"],
-        certification: json["certification"],
-        network: json["network"],
-        country: json["country"],
-        updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
-        trailer: json["trailer"],
-        homepage: json["homepage"],
-        status: json["status"],
-        rating: json["rating"],
-        votes: json["votes"],
-        commentCount: json["comment_count"],
-        languages: json["languages"] == null ? [] : List<String>.from(json["languages"]!.map((x) => x)),
-        availableTranslations: json["available_translations"] == null ? [] : List<String>.from(json["available_translations"]!.map((x) => x)),
-        genres: json["genres"] == null ? [] : List<String>.from(json["genres"]!.map((x) => x)),
-        airedEpisodes: json["aired_episodes"],
-      );
+  factory ExtendedShow.fromJson(Map<String, dynamic> json) {
+    return ExtendedShow(
+      title: json["title"] ?? json["title"],
+      year: json["year"] ?? json["year"],
+      ids: json["ids"] == null ? null : Ids.fromJson(json["ids"]),
+      tagline: json["tagline"] ?? json["tagline"],
+      overview: json["overview"],
+      firstAired: json["first_aired"] == null ? null : DateTime.parse(json["first_aired"]),
+      airs: json["airs"] == null ? null : Airs.fromJson(json["airs"]),
+      runtime: json["runtime"],
+      certification: json["certification"],
+      network: json["network"],
+      country: json["country"],
+      updatedAt: json["updated_at"] == null ? null : DateTime.parse(json["updated_at"]),
+      trailer: json["trailer"],
+      homepage: json["homepage"],
+      status: json["status"],
+      rating: json["rating"],
+      votes: json["votes"],
+      commentCount: json["comment_count"],
+      // languages: json["languages"] == null ? [] : List<String>.from(json["languages"]!.map((x) => x)),
+      availableTranslations: json["available_translations"] == null ? [] : List<String>.from(json["available_translations"]!.map((x) => x)),
+      genres: json["genres"] == null ? [] : List<String>.from(json["genres"]!.map((x) => x)),
+      airedEpisodes: json["aired_episodes"],
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "title": title,
@@ -99,7 +101,7 @@ class ExtendedShow {
         "rating": rating,
         "votes": votes,
         "comment_count": commentCount,
-        "languages": languages == null ? [] : List<dynamic>.from(languages!.map((x) => x)),
+        // "languages": languages == null ? [] : List<dynamic>.from(languages!.map((x) => x)),
         "available_translations": availableTranslations == null ? [] : List<dynamic>.from(availableTranslations!.map((x) => x)),
         "genres": genres == null ? [] : List<dynamic>.from(genres!.map((x) => x)),
         "aired_episodes": airedEpisodes,

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 
 import '../../../torrents/helper.dart';
-import '../../../trakt/json/combined_show.dart';
 import '../../../trakt/json/shows/extended_show.dart';
-import '../../../trakt/json/shows/show.dart';
 import '../../../trakt/json/shows/watched_progress.dart';
 import '../../../trakt/trakt_json.dart';
 import '../../../utils/common.dart';
@@ -31,7 +28,7 @@ class ShowExpanded extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final seasons = snapshot.data;
-            FutureBuilder<ShowsEpisode.Episode> futureBuilder;
+            FutureBuilder<ShowsEpisode.Episode>? futureBuilder;
 
             if (episode != null) {
               return Column(
@@ -64,13 +61,13 @@ class ShowExpanded extends StatelessWidget {
                         },
                       );
                       break outerLoop;
-                    }
+                    } else {}
                   }
                 }
 
                 if (watchedProgress!.resetAt != null) {
                   return Column(
-                    children: [const Text('Next Up:'), futureBuilder, const Text('Seasons:'), Expanded(child: listBuilder(seasons))],
+                    children: [const Text('Next Up:'), futureBuilder!, const Text('Seasons:'), Expanded(child: listBuilder(seasons))],
                   );
                 } else if (watchedProgress!.lastWatchedAt != null) {
                   return Column(
@@ -78,7 +75,23 @@ class ShowExpanded extends StatelessWidget {
                       const Text('Next Up:'),
                       TextButton(
                           onPressed: () {
-                            Navigator.push(context, platformPageRoute(context: context, builder:(context) => TorrentLinks(torrentEpisode: TorrentEpisode(showName: show.title!, seasonId: watchedProgress!.nextEpisode!.season, episodeId: watchedProgress!.nextEpisode!.number, episodeName: '', seasonName: '', showYear: 0, episodeYear: 0, episodeIds: watchedProgress!.nextEpisode!.ids, showIds: show.ids!),),));
+                            Navigator.push(
+                                context,
+                                platformPageRoute(
+                                  context: context,
+                                  builder: (context) => TorrentLinks(
+                                    torrentEpisode: TorrentEpisode(
+                                        showName: show.title!,
+                                        seasonId: watchedProgress!.nextEpisode!.season,
+                                        episodeId: watchedProgress!.nextEpisode!.number,
+                                        episodeName: '',
+                                        seasonName: '',
+                                        showYear: 0,
+                                        episodeYear: 0,
+                                        episodeIds: watchedProgress!.nextEpisode!.ids,
+                                        showIds: show.ids!),
+                                  ),
+                                ));
                           },
                           child: Text(
                               'S${watchedProgress!.nextEpisode?.season}:E${watchedProgress!.nextEpisode?.number} - ${watchedProgress!.nextEpisode?.title}')),

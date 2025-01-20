@@ -1,10 +1,7 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
-import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -13,7 +10,6 @@ import '../../../tmdb/tmdb.dart';
 import '../../../torrents/helper.dart';
 import '../../../trakt/json/enum/media_type.dart';
 import '../../../trakt/trakt_json.dart';
-import '../../../tvdb/tvdb.dart';
 
 class ShowPlayer extends StatefulWidget {
   final Media media;

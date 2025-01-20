@@ -15,7 +15,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/common.dart';
 import '../utils/exceptions.dart';
 import 'json/enum/search_type.dart';
-import 'json/combined_show.dart';
 import 'json/enum/media_type.dart';
 import 'json/movies/extended_movie.dart';
 import 'json/shows/extended_seasons.dart';
@@ -252,6 +251,25 @@ class TraktJson {
                 "ids": {"trakt": traktId}
               }
             };
+
+            var url = Uri.https('api.trakt.tv', '/scrobble/stop');
+            var response = await post(url,
+                headers: {
+                  'Content-type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                  'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
+                  'trakt-api-version': '2'
+                },
+                body: json.encode(object));
+
+            if (response.statusCode == 201) {
+              print(response.body);
+              if (progress >= 80) {
+                removePlaybackItem(json.decode(response.body)['id']);
+              }
+            }
+            print(response.statusCode);
+            print('Stop Watching: ${response.body}');
           }
         case MediaType.movie:
         // TODO: Handle this case.
@@ -264,26 +282,6 @@ class TraktJson {
         case MediaType.user:
         // TODO: Handle this case.
       }
-
-      var url = Uri.https('api.trakt.tv', '/scrobble/stop');
-      print(json.encode(object));
-      var response = await post(url,
-          headers: {
-            'Content-type': 'application/json',
-            'Authorization': 'Bearer $token',
-            'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
-            'trakt-api-version': '2'
-          },
-          body: json.encode(object));
-
-      if (response.statusCode == 201) {
-        print(response.body);
-        if (progress >= 80) {
-          removePlaybackItem(json.decode(response.body)['id']);
-        }
-      }
-      print(response.statusCode);
-      print('Stop Watching: ${response.body}');
     }
   }
 
@@ -305,6 +303,19 @@ class TraktJson {
                 }
               ]
             };
+
+            var response = await post(url,
+                headers: {
+                  'Content-type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                  'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
+                  'trakt-api-version': '2'
+                },
+                body: json.encode(object));
+
+            await Future.delayed(Duration(seconds: 5));
+
+            nextUpFuture = Future.value([]);
           }
         case MediaType.movie:
         // TODO: Handle this case.
@@ -317,18 +328,6 @@ class TraktJson {
         case MediaType.user:
         // TODO: Handle this case.
       }
-      var response = await post(url,
-          headers: {
-            'Content-type': 'application/json',
-            'Authorization': 'Bearer $token',
-            'trakt-api-key': (await rootBundle.loadString('keys')).split(',')[0],
-            'trakt-api-version': '2'
-          },
-          body: json.encode(object));
-
-      await Future.delayed(Duration(seconds: 5));
-
-      nextUpFuture = Future.value([]);
     }
   }
 

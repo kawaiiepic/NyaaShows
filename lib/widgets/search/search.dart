@@ -2,17 +2,14 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../main.dart';
 import '../../tmdb/tmdb.dart';
-import '../../trakt/json/combined_show.dart';
 import '../../trakt/json/enum/media_type.dart';
 import '../../trakt/json/enum/search_type.dart';
 import '../../trakt/json/movies/extended_movie.dart';
 import '../../trakt/json/search/search.dart' as json_search;
 import '../../trakt/json/shows/extended_show.dart';
-import '../../trakt/json/shows/show.dart';
 import '../../trakt/json/shows/watched_progress.dart';
 import '../../trakt/trakt_json.dart';
 import '../../tvdb/tvdb.dart';

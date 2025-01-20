@@ -1,15 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
-import 'package:nyaashows/trakt/json/shows/episode.dart';
-import 'package:nyaashows/tvdb/tvdb.dart';
 
 import '../../main.dart';
 import '../../tmdb/tmdb.dart';
 import '../../torrents/helper.dart';
-import '../../trakt/json/combined_show.dart';
 import '../../trakt/json/enum/media_type.dart';
-import '../../trakt/json/shows/watched_progress.dart';
 import '../../trakt/json/sync/playback_progress.dart';
 import '../../trakt/json/sync/watched.dart';
 import '../../trakt/trakt_json.dart';
@@ -18,6 +14,7 @@ import '../search/search.dart';
 import 'shows/expanded_next_up.dart';
 import 'shows/show_expanded.dart';
 import 'torrent/torrent_links.dart';
+import '../../trakt/json/shows/episode.dart' as ShowsEpisode;
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -83,7 +80,7 @@ class _DashboardState extends State<Dashboard> {
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       var artwork = snapshot.data!;
-                      FutureBuilder<Episode> futureBuilder;
+                      FutureBuilder<ShowsEpisode.Episode>? futureBuilder;
 
                       return FutureBuilder(
                         future: TraktJson.watchedProgress(watched.show.ids!.trakt!),
@@ -95,7 +92,7 @@ class _DashboardState extends State<Dashboard> {
                               for (var season in progress.seasons) {
                                 for (var episode in season.episodes) {
                                   if (episode.lastWatchedAt != null && DateTime.parse(episode.lastWatchedAt).compareTo(DateTime.parse(progress.resetAt)) < 0) {
-                                    futureBuilder = FutureBuilder(
+                                     futureBuilder = FutureBuilder(
                                       future: TraktJson.episode(watched.show.ids!.trakt, season.number, episode.number),
                                       builder: (context, snapshot) {
                                         if (snapshot.hasData) {
@@ -170,12 +167,9 @@ class _DashboardState extends State<Dashboard> {
                                   }
                                 }
                               }
-                              if (futureBuilder != null) {
-                                return futureBuilder;
-                              } else {
-                                return Common.loading();
-                              }
-                            } else {
+
+                              return futureBuilder!;
+                                                        } else {
                               if (progress.nextEpisode != null) {
                                 return Column(children: [
                                   Container(

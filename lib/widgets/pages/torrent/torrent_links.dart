@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:http/http.dart';
 import 'package:media_kit/media_kit.dart';
-import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:nyaashows/utils/exceptions.dart';
 
@@ -177,6 +176,11 @@ class TorrentLinksState extends State<TorrentLinks> {
           {
             RealDebrid.refreshToken();
             return _addMagnet(magnet);
+          }
+        case 403:
+          {
+            RealDebrid.expiredPremium();
+            return Future.error(Exception('Expired Premium'));
           }
         default:
           {

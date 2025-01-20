@@ -125,6 +125,31 @@ class RealDebrid {
     }
   }
 
+  static Future<void> expiredPremium() async {
+    return showDialog(
+      context: NyaaShows.navigatorKey.currentContext!,
+      builder: (context) => PlatformAlertDialog(
+        title: const Text('Real-Debrid Missing Premium'),
+        content: Column(
+          children: [
+            Text('This account is missing Premium')
+          ],
+        ),
+        actions: [
+          PlatformTextButton(
+            onPressed: () {
+              Navigator.pop(context, 'Cancel');
+              if (RealDebrid.timer.isActive) {
+                RealDebrid.timer.cancel();
+              }
+            },
+            child: const Text('Cancel'),
+          )
+        ],
+      ),
+    );
+  }
+
   static Future<void> refreshToken() async {
     if (await hasAccessToken()) {
       final file = await Common.dirJson('rd-token');

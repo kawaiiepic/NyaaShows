@@ -27,7 +27,7 @@ environment:
 # dependencies can be manually updated by changing the version numbers below to
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
-package: media_kit_native_event_loop
+# package: media_kit_native_event_loop
 
 dependencies:
   flutter:
@@ -37,37 +37,27 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   flutter_platform_widgets: ^7.0.1
-  flutter_svg: ^2.0.12
+  flutter_svg: ^2.0.16
   path_provider: ^2.1.5
   http: ^1.2.2
   url_launcher: ^6.3.1
-  media_kit: ^1.1.5
   flutter_discord_rpc: ^1.0.0
-  media_kit_video: ^1.2.5
   html: ^0.15.5
   html_parser_plus: ^0.1.4
-  video_player_media_kit: ^1.0.5
-  media_kit_libs_android_video: ^1.3.6
-  media_kit_libs_ios_video: ^1.1.4
-  media_kit_libs_macos_video: ^1.1.4
-  media_kit_libs_windows_video: ^1.0.10
-  media_kit_libs_linux: ^1.1.3
-  media_kit_libs_video: ^1.0.5
   fluttertoast: ^8.2.8
+
+  media_kit: ^1.1.10 # Primary package.
+  media_kit_video: ^1.2.4 # For video rendering.
+  media_kit_libs_video: ^1.0.4 # Native video dependencies.
+  # audio_service: ^0.18.12
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^5.0.0
   test: ^1.25.7
-  # integration_test:
-  #   sdk: flutter
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -83,29 +73,3 @@ flutter:
   assets:
     - keys
     - assets/trakt-logo.svg
-
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/assets-and-images/#resolution-aware
-
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/assets-and-images/#from-packages
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/custom-fonts/#from-packages

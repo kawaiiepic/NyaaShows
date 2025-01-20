@@ -1,13 +1,10 @@
-import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
-import 'package:video_player_media_kit/video_player_media_kit.dart';
 import 'dart:developer' as developer;
 
-import 'discord/discord.dart';
 import 'widgets/main/main.dart';
 
 class NyaaShows {
@@ -18,21 +15,15 @@ class NyaaShows {
 }
 
 void main() async {
-  Discord.init();
-  VideoPlayerMediaKit.ensureInitialized(
-    android: true, // default: false    -    dependency: media_kit_libs_android_video
-    iOS: true, // default: false    -    dependency: media_kit_libs_ios_video
-    macOS: true, // default: false    -    dependency: media_kit_libs_macos_video
-    windows: true, // default: false    -    dependency: media_kit_libs_windows_video
-    linux: true, // default: false    -    dependency: media_kit_libs_linux
-  );
-  print(jsonEncode({
-    "progress": 0.0,
-    "episode": {
-      "ids": {"trakt": 0}
-    }
-  }));
-  runApp(NyaaApp());
+  // Discord.init();
+  // VideoPlayerMediaKit.ensureInitialized(
+  //   android: true, // default: false    -    dependency: media_kit_libs_android_video
+  //   iOS: true, // default: false    -    dependency: media_kit_libs_ios_video
+  //   macOS: true, // default: false    -    dependency: media_kit_libs_macos_video
+  //   windows: true, // default: false    -    dependency: media_kit_libs_windows_video
+  //   linux: true, // default: false    -    dependency: media_kit_libs_linux
+  // );
+  // runApp(NyaaApp());
 }
 
 class NyaaApp extends StatefulWidget {

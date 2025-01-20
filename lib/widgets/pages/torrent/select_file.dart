@@ -11,7 +11,6 @@ import 'package:nyaashows/utils/exceptions.dart';
 
 import '../../../real-debrid/real_debrid.dart';
 import '../../../torrents/helper.dart';
-import '../../../utils/common.dart';
 import '../player/show_player.dart';
 
 class SelectFile extends StatefulWidget {

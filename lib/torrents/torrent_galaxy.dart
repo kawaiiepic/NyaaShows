@@ -8,11 +8,16 @@ class TorrentGalaxy extends TorrentEngine {
   String name = "TorrentGalaxy";
 
   @override
-  Future<List<TorrentFile>?> search(List<String> searchTerms) async {
+  Future<List<TorrentFile>?> search(List<String> searchTerms, {movie = false}) async {
     String url;
     List<TorrentFile> torrents = [];
     for (var term in searchTerms) {
-      var url = 'https://torrentgalaxy.one/get-posts/keywords:$term';
+      String url;
+      if(movie){
+        url = 'https://torrentgalaxy.one/get-posts/keywords:$term:category:Anime:category:Movies';
+      } else {
+        url = 'https://torrentgalaxy.one/get-posts/keywords:$term:category:Anime:category:TV';
+      }
       print(url);
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -39,11 +44,12 @@ class TorrentGalaxy extends TorrentEngine {
 
               var sizeText = elements[5].children[1].text;
               var sized = 0;
+
               if (sizeText.contains("GB")) {
                 var sizeTrimmed = sizeText.replaceAll('GB', '');
-                sized = (double.parse(sizeTrimmed) * 1000.0).toInt();
+                sized = (double.parse(sizeTrimmed) * 1000.0 * 1000000).toInt();
               } else {
-                sized = (double.tryParse(sizeText.replaceAll('MB', '')))!.toInt();
+                sized = (double.parse(sizeText.replaceAll('MB', '')) * 1000000).toInt();
               }
 
               var size = sized;

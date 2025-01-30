@@ -1,11 +1,8 @@
-<<<<<<< HEAD
 import 'package:nyaashows/main.dart';
 import 'package:nyaashows/torrents/torrent_galaxy.dart';
-=======
 import '../main.dart';
 import '../trakt/json/utils/ids.dart';
 import 'torrent_galaxy.dart';
->>>>>>> bacc27a54346025c68eaffba2bb6d99a806c96ac
 
 class TorrentHelper {
   static final List<TorrentEngine> _torrentEngines = [

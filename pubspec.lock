@@ -430,7 +430,7 @@ packages:
     source: hosted
     version: "1.1.4"
   media_kit_libs_linux:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: media_kit_libs_linux
       sha256: e186891c31daa6bedab4d74dcdb4e8adfccc7d786bfed6ad81fe24a3b3010310
@@ -978,30 +978,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.4"
-  video_player:
-    dependency: "direct main"
-    description:
-      name: video_player
-      sha256: "4a8c3492d734f7c39c2588a3206707a05ee80cef52e8c7f3b2078d430c84bc17"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.9.2"
-  video_player_android:
-    dependency: transitive
-    description:
-      name: video_player_android
-      sha256: "391e092ba4abe2f93b3e625bd6b6a6ec7d7414279462c1c0ee42b5ab8d0a0898"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.7.16"
-  video_player_avfoundation:
-    dependency: transitive
-    description:
-      name: video_player_avfoundation
-      sha256: "61c54fb08fee52861d819a9b3b8e30b92456dad43a875434c677c892eb7772de"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.6.6"
   video_player_media_kit:
     dependency: "direct main"
     description:
@@ -1018,14 +994,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.2.3"
-  video_player_web:
-    dependency: transitive
-    description:
-      name: video_player_web
-      sha256: "881b375a934d8ebf868c7fb1423b2bfaa393a0a265fa3f733079a86536064a10"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.3.3"
   vm_service:
     dependency: transitive
     description:

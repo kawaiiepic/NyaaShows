@@ -18,28 +18,24 @@
           overlays = [inputs.rust-overlay.overlays.default];
         };
 
-        config.android_sdk.accept_license = true;
-
+        buildToolsVersion = "34.0.0";
         androidComposition = pkgs.androidenv.composeAndroidPackages {
-          buildToolsVersions = [
-            "30.0.3"
-          ];
-          platformVersions = ["33" "34"];
-          abiVersions = ["x86_64"];
-          includeEmulator = true;
-          emulatorVersion = "35.1.4";
-          includeSystemImages = true;
-          systemImageTypes = ["google_apis_playstore"];
-          includeNDK = true;
-          ndkVersions = ["25.1.8937393"];
+          buildToolsVersions = [buildToolsVersion "28.0.3"];
+          platformVersions = ["34" "28"];
+          abiVersions = ["armeabi-v7a" "arm64-v8a"];
         };
-
         androidSdk = androidComposition.androidsdk;
 
         devShells.default =
           pkgs.mkShell
           {
+            ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+
             buildInputs = with pkgs; [
+              flutter
+              androidSdk # The customized SDK that we've made above
+              jdk17
+
               pkg-config
               libarchive.dev
               openssl.dev
@@ -50,26 +46,9 @@
               sqlite.dev
               libpsl.dev
               nghttp2.dev
-              # glib
+              libepoxy
               pcre2
-              # cmake
-              # flutter
-              # ninja
-              # corrosion
-              # (pkgs.rust-bin.selectLatestNightlyWith (toolchain:
-              #   toolchain.default.override {
-              #     extensions = ["rust-src" "rustfmt" "clippy"];
-              #     targets = ["wasm32-unknown-unknown" "aarch64-linux-android" "armv7-linux-androideabi" "x86_64-linux-android" "i686-linux-android"];
-              #   }))
               gtk3
-              # clang
-              # llvmPackages.libclang
-              # awscli2
-              # cargo-lambda
-              # jdk17
-              # androidSdk
-              # gcc-unwrapped
-              # aapt
 
               util-linux
               libselinux

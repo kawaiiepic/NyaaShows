@@ -1,22 +1,31 @@
+import 'dart:developer';
+
 import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
 
 class Discord {
-  String client_id = '1287141763357868052';
+  static String client_id = '1287141763357868052';
 
   int startEpoch = DateTime.now().millisecondsSinceEpoch;
 
-  init() async {
-    await FlutterDiscordRPC.initialize(
+  static init() async {
+    try {
+      await FlutterDiscordRPC.initialize(
       client_id,
     );
-    FlutterDiscordRPC.instance.connect();
+
+    await FlutterDiscordRPC.instance.connect();
+    } catch (e) {
+      log(e.toString());
+    }
   }
 
-  resetPresence() {
+  static resetPresence() {
     FlutterDiscordRPC.instance.clearActivity();
   }
 
-  updatePresence(RPCActivity activity) {
-    FlutterDiscordRPC.instance.setActivity(activity: activity);
+  static updatePresence(RPCActivity activity) {
+    if (FlutterDiscordRPC.instance.isConnected) {
+      FlutterDiscordRPC.instance.setActivity(activity: activity);
+    }
   }
 }

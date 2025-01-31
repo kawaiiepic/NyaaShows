@@ -26,6 +26,8 @@
         };
         androidSdk = androidComposition.androidsdk;
 
+        packages.default = pkgs.callPackage ./package {};
+
         devShells.default =
           pkgs.mkShell
           {

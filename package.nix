@@ -1,6 +1,6 @@
 {
   flutter,
-  fetchFromGithub,
+  makeDesktopItem,
   lib
 }:
 
@@ -8,14 +8,20 @@ flutter.buildFlutterApplication {
   pname = "nyaashows";
   version = "0.1.0";
 
-  src = fetchFromGithub {
-    owner = "kawaiiepic";
-    repo = "NyaaShows";
-    rev = "727b1260db10f58ae99e06fc30ab3112d2123161";
-    sha256 = "";
-  };
+  src = lib.cleanSource ./.;
 
    pubspecLock = lib.importJSON ./pubspec.lock.json;
+
+     desktopItems = [
+    (makeDesktopItem {
+      name = "quickgui";
+      exec = "quickgui";
+      icon = "quickgui";
+      desktopName = "Quickgui";
+      comment = "An elegant virtual machine manager for the desktop";
+      categories = [ "Development" "System" ];
+    })
+  ];
 
   meta = with lib; {
     homepage = "https://github.com/kawaiiepic/NyaaShows";

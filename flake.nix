@@ -26,7 +26,7 @@
         };
         androidSdk = androidComposition.androidsdk;
 
-        packages.default = pkgs.callPackage ./package {};
+        packages.default = pkgs.callPackage ./package.nix {};
 
         devShells.default =
           pkgs.mkShell
@@ -102,7 +102,7 @@
             '';
           };
       in {
-        inherit devShells;
+        inherit devShells packages;
       }
     );
 }

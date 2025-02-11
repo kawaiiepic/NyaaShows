@@ -1,0 +1,10 @@
+name: build_tool_runner
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  build_tool:
+    path: "/home/mia/.pub-cache/hosted/pub.dev/flutter_discord_rpc-1.0.0/cargokit/build_tool"

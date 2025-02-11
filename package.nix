@@ -1,6 +1,8 @@
 {
   flutter,
   makeDesktopItem,
+  copyDesktopItems,
+  pkgs,
   lib
 }:
 
@@ -12,16 +14,28 @@ flutter.buildFlutterApplication {
 
    pubspecLock = lib.importJSON ./pubspec.lock.json;
 
-     desktopItems = [
-    (makeDesktopItem {
-      name = "quickgui";
-      exec = "quickgui";
-      icon = "quickgui";
-      desktopName = "Quickgui";
-      comment = "An elegant virtual machine manager for the desktop";
-      categories = [ "Development" "System" ];
-    })
-  ];
+nativeBuildInputs = [ copyDesktopItems pkgs.pkg-config ];
+   buildInputs = with pkgs; [
+              mpv
+              libass.dev
+              ffmpeg.dev
+              libplacebo
+              libunwind
+              shaderc
+              vulkan-loader
+              lcms.dev
+            ];
+
+  #    desktopItems = [
+  #   (makeDesktopItem {
+  #     name = "quickgui";
+  #     exec = "quickgui";
+  #     icon = "quickgui";
+  #     desktopName = "Quickgui";
+  #     comment = "An elegant virtual machine manager for the desktop";
+  #     categories = [ "Development" "System" ];
+  #   })
+  # ];
 
   meta = with lib; {
     homepage = "https://github.com/kawaiiepic/NyaaShows";

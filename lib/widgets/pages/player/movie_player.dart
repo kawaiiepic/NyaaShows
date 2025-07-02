@@ -1,16 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
+// import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../../../discord/discord.dart';
-import '../../../tmdb/tmdb.dart';
 import '../../../torrents/helper.dart';
 import '../../../trakt/json/enum/media_type.dart';
-import '../../../trakt/trakt_json.dart';
+import '../../../trakt/trakt.dart';
 
 class MoviePlayer extends StatefulWidget {
   final Media media;
@@ -39,7 +37,7 @@ class MyScreenState extends State<MoviePlayer> {
 
     super.widget.media;
     player.open(super.widget.media);
-    TraktJson.startWatching(MediaType.movie, {
+    Trakt.startWatching(MediaType.movie, {
       "progress": super.widget.progress,
       "movie": {
         "ids": {"trakt": super.widget.torrentMovie.ids.trakt}
@@ -48,62 +46,62 @@ class MyScreenState extends State<MoviePlayer> {
 
     discordStartPoc = DateTime.now();
 
-    TMDB.posterUrl(MediaType.movie, super.widget.torrentMovie.ids.tmdb!).then((var artwork) {
-      timer = Timer.periodic(const Duration(seconds: 3), (Timer t) {
-        Discord.updatePresence(switch (player.state.playing) {
-          true => RPCActivity(
-              activityType: ActivityType.watching,
-              assets: RPCAssets(
-                largeImage: artwork,
-                largeText: super.widget.torrentMovie.movieName,
-              ),
-              buttons: [
-                RPCButton(
-                    label: "trakt",
-                    url:
-                        "https://trakt.tv/movies/${super.widget.torrentMovie.ids.trakt}"),
-              ],
-              details: '${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})',
-              // state: '',
-              timestamps: RPCTimestamps(
-                start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
-                end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
-              ),
-            ),
-          false => RPCActivity(
-              activityType: ActivityType.watching,
-              assets: RPCAssets(
-                largeImage: artwork,
-                largeText: super.widget.torrentMovie.movieName,
-              ),
-              buttons: [
-                RPCButton(
-                    label: "trakt",
-                    url:
-                        "https://trakt.tv/movies/${super.widget.torrentMovie.ids.trakt}"),
-              ],
-              details: '⏸️ ${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})',
-              // state: '${super.widget.torrentEpisode!.seasonId}x${super.widget.torrentEpisode!.episodeId} ${super.widget.torrentEpisode!.episodeName}',
-              timestamps: RPCTimestamps(
-                start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
-                end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
-              ),
-            ),
-        });
-      });
-    });
+    // TMDB.posterUrl(MediaType.movie, super.widget.torrentMovie.ids.tmdb!).then((var artwork) {
+    //   timer = Timer.periodic(const Duration(seconds: 3), (Timer t) {
+    //     Discord.updatePresence(switch (player.state.playing) {
+    //       true => RPCActivity(
+    //           activityType: ActivityType.watching,
+    //           assets: RPCAssets(
+    //             largeImage: artwork,
+    //             largeText: super.widget.torrentMovie.movieName,
+    //           ),
+    //           buttons: [
+    //             RPCButton(
+    //                 label: "trakt",
+    //                 url:
+    //                     "https://trakt.tv/movies/${super.widget.torrentMovie.ids.trakt}"),
+    //           ],
+    //           details: '${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})',
+    //           // state: '',
+    //           timestamps: RPCTimestamps(
+    //             start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
+    //             end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
+    //           ),
+    //         ),
+    //       false => RPCActivity(
+    //           activityType: ActivityType.watching,
+    //           assets: RPCAssets(
+    //             largeImage: artwork,
+    //             largeText: super.widget.torrentMovie.movieName,
+    //           ),
+    //           buttons: [
+    //             RPCButton(
+    //                 label: "trakt",
+    //                 url:
+    //                     "https://trakt.tv/movies/${super.widget.torrentMovie.ids.trakt}"),
+    //           ],
+    //           details: '⏸️ ${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})',
+    //           // state: '${super.widget.torrentEpisode!.seasonId}x${super.widget.torrentEpisode!.episodeId} ${super.widget.torrentEpisode!.episodeName}',
+    //           timestamps: RPCTimestamps(
+    //             start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
+    //             end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
+    //           ),
+    //         ),
+    //     });
+    //   });
+    // });
 
     player.stream.playing.listen(
       (event) {
         if (event) {
-          TraktJson.startWatching(MediaType.movie, {
+          Trakt.startWatching(MediaType.movie, {
             "progress": progressPercentage(),
             "episode": {
               "ids": {"trakt": super.widget.torrentMovie.ids.trakt}
             }
           });
         } else {
-          TraktJson.pauseWatching(MediaType.movie, {
+          Trakt.pauseWatching(MediaType.movie, {
             "progress": progressPercentage(),
             "episode": {
               "ids": {"trakt": super.widget.torrentMovie.ids.trakt}
@@ -118,7 +116,7 @@ class MyScreenState extends State<MoviePlayer> {
         if (player.state.position.inSeconds / player.state.duration.inSeconds >= 0.8 && !finished) {
           finished = !finished;
 
-          TraktJson.stopWatching(MediaType.movie, 100, super.widget.torrentMovie.ids.trakt!);
+          Trakt.stopWatching(MediaType.movie, 100, super.widget.torrentMovie.ids.trakt!);
         }
       },
     );
@@ -126,7 +124,6 @@ class MyScreenState extends State<MoviePlayer> {
 
   int progressPercentage() {
     var progress = ((player.state.position.inSeconds / player.state.duration.inSeconds) * 100).toStringAsFixed(2);
-    print(progress);
     if (progress == "NaN" || progress == "Infinity") {
       return 0;
     } else {
@@ -141,11 +138,10 @@ class MyScreenState extends State<MoviePlayer> {
   @override
   void dispose() {
     if (!finished) {
-      TraktJson.stopWatching(MediaType.movie, 0.0, super.widget.torrentMovie.ids.trakt!);
+      Trakt.stopWatching(MediaType.movie, 0.0, super.widget.torrentMovie.ids.trakt!);
     }
     player.dispose();
     timer?.cancel();
-    Discord.resetPresence();
     super.dispose();
   }
 
@@ -231,9 +227,7 @@ class MyScreenState extends State<MoviePlayer> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                PlatformText('${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})')
-              ],
+              children: [PlatformText('${super.widget.torrentMovie.movieName} (${super.widget.torrentMovie.movieYear})')],
             ))
       ],
       // Modify bottom button bar:

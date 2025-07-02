@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
-import 'package:nyaashows/trakt/trakt_json.dart';
+import 'package:nyaashows/trakt/trakt.dart';
 
 import '../../real-debrid/real_debrid.dart';
 
@@ -13,7 +13,7 @@ class PopupMenu extends StatelessWidget {
         options: [
           PopupMenuOption(
               onTap: (p0) {
-                TraktJson.auth(context);
+                Trakt.auth(context);
               },
               label: 'Connect Trakt'),
           PopupMenuOption(
@@ -21,14 +21,14 @@ class PopupMenu extends StatelessWidget {
                 RealDebrid.login(context);
               },
               label: 'Connect Real-Debrid'),
-             PopupMenuOption(
+          PopupMenuOption(
               onTap: (p0) {
-                TraktJson.auth(context);
+                Trakt.auth(context);
               },
               label: 'Refresh App'),
         ],
         icon: FutureBuilder(
-          future: TraktJson.userProfile(),
+          future: Trakt.userProfile(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return CircleAvatar(

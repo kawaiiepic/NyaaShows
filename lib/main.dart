@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +5,7 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import 'dart:developer' as developer;
 import 'package:video_player_media_kit/video_player_media_kit.dart';
 
-import 'discord/discord.dart';
+// import 'discord/discord.dart';
 import 'widgets/main/main.dart';
 
 class NyaaShows {
@@ -17,7 +16,7 @@ class NyaaShows {
 }
 
 void main() async {
-  Discord.init();
+  // Discord.init();
   VideoPlayerMediaKit.ensureInitialized(
     android: true, // default: false    -    dependency: media_kit_libs_android_video
     iOS: true, // default: false    -    dependency: media_kit_libs_ios_video
@@ -36,7 +35,7 @@ class NyaaApp extends StatefulWidget {
 }
 
 class _NyaaAppState extends State<NyaaApp> {
-  ThemeMode? themeMode = ThemeMode.system;
+  ThemeMode? themeMode = ThemeMode.dark;
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override

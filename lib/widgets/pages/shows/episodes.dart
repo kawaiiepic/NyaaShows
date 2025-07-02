@@ -5,7 +5,7 @@ import 'package:nyaashows/widgets/pages/torrent/torrent_links.dart';
 import '../../../trakt/json/enum/media_type.dart';
 import '../../../trakt/json/shows/extended_seasons.dart';
 import '../../../trakt/json/shows/extended_show.dart';
-import '../../../trakt/trakt_json.dart';
+import '../../../trakt/trakt.dart';
 import '../../../utils/common.dart';
 
 class EpisodesPage extends StatelessWidget {
@@ -19,7 +19,7 @@ class EpisodesPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(),
       body: FutureBuilder(
-        future: TraktJson.seasonEpisodes(show.ids!.trakt, season.number),
+        future: Trakt.seasonEpisodes(show.ids!.trakt, season.number),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             return ListView.builder(
@@ -43,7 +43,7 @@ class EpisodesPage extends StatelessWidget {
                                   items: [
                                     PopupMenuItem(
                                       onTap: () {
-                                        TraktJson.stopWatching(MediaType.episode, 100, snapshot.data![index].ids.trakt!);
+                                        Trakt.stopWatching(MediaType.episode, 100, snapshot.data![index].ids.trakt!);
                                       },
                                       child: Text('Mark as Watched'),
                                     )

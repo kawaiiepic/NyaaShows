@@ -1,15 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
+// import 'package:flutter_discord_rpc/flutter_discord_rpc.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
-import '../../../discord/discord.dart';
-import '../../../tmdb/tmdb.dart';
 import '../../../torrents/helper.dart';
 import '../../../trakt/json/enum/media_type.dart';
-import '../../../trakt/trakt_json.dart';
+import '../../../trakt/trakt.dart';
 
 class ShowPlayer extends StatefulWidget {
   final Media media;
@@ -40,8 +38,7 @@ class MyScreenState extends State<ShowPlayer> {
 
     super.widget.media;
     player.open(super.widget.media);
-    print(progress);
-    TraktJson.startWatching(MediaType.show, {
+    Trakt.startWatching(MediaType.show, {
       "progress": progress,
       "episode": {
         "ids": {"trakt": super.widget.torrentEpisode.episodeIds.trakt}
@@ -49,50 +46,50 @@ class MyScreenState extends State<ShowPlayer> {
     });
 
     discordStartPoc = DateTime.now();
-    TMDB.posterUrl(MediaType.show, super.widget.torrentEpisode.showIds.tmdb!).then((var artwork) {
-      timer = Timer.periodic(const Duration(seconds: 3), (Timer t) {
-        Discord.updatePresence(switch (player.state.playing) {
-          true => RPCActivity(
-              activityType: ActivityType.watching,
-              assets: RPCAssets(
-                largeImage: artwork,
-                largeText: super.widget.torrentEpisode.showName,
-              ),
-              buttons: [
-                RPCButton(
-                    label: "trakt",
-                    url:
-                        "https://trakt.tv/shows/${super.widget.torrentEpisode.showIds.trakt}/seasons/${super.widget.torrentEpisode.seasonId}/episodes/${super.widget.torrentEpisode.episodeId}"),
-              ],
-              details: '${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.episodeYear})',
-              state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
-              timestamps: RPCTimestamps(
-                start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
-                end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
-              ),
-            ),
-          false => RPCActivity(
-              activityType: ActivityType.watching,
-              assets: RPCAssets(
-                largeImage: artwork,
-                largeText: super.widget.torrentEpisode.showName,
-              ),
-              buttons: [
-                RPCButton(
-                    label: "trakt",
-                    url:
-                        "https://trakt.tv/shows/${super.widget.torrentEpisode.showIds.trakt}/seasons/${super.widget.torrentEpisode.seasonId}/episodes/${super.widget.torrentEpisode.episodeId}"),
-              ],
-              details: '⏸️ ${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.showYear})',
-              state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
-              timestamps: RPCTimestamps(
-                start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
-                end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
-              ),
-            ),
-        });
-      });
-    });
+    // TMDB.posterUrl(MediaType.show, super.widget.torrentEpisode.showIds.tmdb!).then((var artwork) {
+    //   timer = Timer.periodic(const Duration(seconds: 3), (Timer t) {
+    //     Discord.updatePresence(switch (player.state.playing) {
+    //       true => RPCActivity(
+    //           activityType: ActivityType.watching,
+    //           assets: RPCAssets(
+    //             largeImage: artwork,
+    //             largeText: super.widget.torrentEpisode.showName,
+    //           ),
+    //           buttons: [
+    //             RPCButton(
+    //                 label: "trakt",
+    //                 url:
+    //                     "https://trakt.tv/shows/${super.widget.torrentEpisode.showIds.trakt}/seasons/${super.widget.torrentEpisode.seasonId}/episodes/${super.widget.torrentEpisode.episodeId}"),
+    //           ],
+    //           details: '${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.episodeYear})',
+    //           state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
+    //           timestamps: RPCTimestamps(
+    //             start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
+    //             end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
+    //           ),
+    //         ),
+    //       false => RPCActivity(
+    //           activityType: ActivityType.watching,
+    //           assets: RPCAssets(
+    //             largeImage: artwork,
+    //             largeText: super.widget.torrentEpisode.showName,
+    //           ),
+    //           buttons: [
+    //             RPCButton(
+    //                 label: "trakt",
+    //                 url:
+    //                     "https://trakt.tv/shows/${super.widget.torrentEpisode.showIds.trakt}/seasons/${super.widget.torrentEpisode.seasonId}/episodes/${super.widget.torrentEpisode.episodeId}"),
+    //           ],
+    //           details: '⏸️ ${super.widget.torrentEpisode.showName} (${super.widget.torrentEpisode.showYear})',
+    //           state: '${super.widget.torrentEpisode.seasonId}x${super.widget.torrentEpisode.episodeId} ${super.widget.torrentEpisode.episodeName}',
+    //           timestamps: RPCTimestamps(
+    //             start: DateTime.now().subtract(player.state.position).millisecondsSinceEpoch,
+    //             end: DateTime.now().add(player.state.duration).subtract(player.state.position).millisecondsSinceEpoch,
+    //           ),
+    //         ),
+    //     });
+    //   });
+    // });
 
     player.stream.position.listen(
       (Duration position) {
@@ -103,7 +100,7 @@ class MyScreenState extends State<ShowPlayer> {
         if (player.state.position.inSeconds / player.state.duration.inSeconds >= 0.8 && !finished) {
           finished = !finished;
 
-          TraktJson.stopWatching(MediaType.episode, 100, super.widget.torrentEpisode.episodeIds.trakt!);
+          Trakt.stopWatching(MediaType.episode, 100, super.widget.torrentEpisode.episodeIds.trakt!);
         }
       },
     );
@@ -116,11 +113,10 @@ class MyScreenState extends State<ShowPlayer> {
   @override
   void dispose() {
     if (!finished) {
-      TraktJson.stopWatching(MediaType.episode, progress, super.widget.torrentEpisode.episodeIds.trakt!);
+      Trakt.stopWatching(MediaType.episode, progress, super.widget.torrentEpisode.episodeIds.trakt!);
     }
     player.dispose();
     timer?.cancel();
-    Discord.resetPresence();
     super.dispose();
   }
 
@@ -191,7 +187,7 @@ class MyScreenState extends State<ShowPlayer> {
       seekBarThumbColor: Colors.pink.shade200,
       seekBarPositionColor: Colors.pink.shade200,
       controlsHoverDuration: const Duration(seconds: 5),
-      primaryButtonBar: [MaterialPlayOrPauseButton(iconSize: 36.0)],
+      primaryButtonBar: [MaterialPlayOrPauseButton(iconSize: 48.0)],
       // Modify top button bar:
       topButtonBar: [
         MaterialDesktopCustomButton(
@@ -236,14 +232,29 @@ class MyScreenState extends State<ShowPlayer> {
   @override
   Widget build(BuildContext context) {
     return MaterialDesktopVideoControlsTheme(
-      normal: controls(),
-      fullscreen: controls(),
-      child: Scaffold(
-        body: Video(
-          controller: controller,
-          controls: Theme.of(context).platform == TargetPlatform.iOS ? CupertinoVideoControls : MaterialDesktopVideoControls,
-        ),
-      ),
-    );
+        normal: controls(),
+        fullscreen: controls(),
+        child: Scaffold(
+          body: Center(
+            child: Stack(
+               alignment: Alignment.topRight,
+              children: [
+                Video(
+                  controller: controller,
+                  controls: Theme.of(context).platform == TargetPlatform.iOS ? CupertinoVideoControls : MaterialDesktopVideoControls,
+                ),
+                Visibility(
+                    visible: true,
+                    child: Container(
+                      margin: EdgeInsets.fromLTRB(0, 12, 12, 0),
+                      width: 100,
+                      height: 100,
+                      color: Colors.blue,
+                      child: Center(child: Text("I'm visible")),
+                    )),
+              ],
+            ),
+          ),
+        ));
   }
 }

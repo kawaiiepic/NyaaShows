@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
+import 'package:nyaashows/main.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../trakt/json/enum/media_type.dart';
@@ -14,7 +15,7 @@ class TVDB {
   static Map<String, Uint8List> imageData = {};
 
   static Future<String> accessToken() async {
-    print('TVDB accessToken');
+    NyaaShows.log('TVDB accessToken involked.');
     // TODO: Save token to a local variable.
     final file = await Common.dirJson('tvdb');
 
@@ -90,10 +91,9 @@ class TVDB {
 
         return art.bodyBytes;
       } else {
-        print(response.body);
+        throw ('Artwork unknown statusCode');
       }
     }
-
 
     throw Future.error(Exception());
   }

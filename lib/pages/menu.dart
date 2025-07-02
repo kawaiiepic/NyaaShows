@@ -1,0 +1,1 @@
+enum Menu { settings, trakt, about, realdebrid }

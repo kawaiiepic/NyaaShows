@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:http/http.dart';
+import 'package:nyaashows/main.dart';
 import 'package:nyaashows/trakt/json/enum/media_type.dart';
 import 'package:nyaashows/utils/exceptions.dart';
 import 'package:path_provider/path_provider.dart';
@@ -47,7 +48,7 @@ class TMDB {
   }
 
   static Future<String> accessToken() async {
-    print('TMDB accessToken');
+    NyaaShows.log("TMDB accessToken involked.");
     return Future.value((await rootBundle.loadString('keys')).split(',')[3]);
   }
 
@@ -75,9 +76,7 @@ class TMDB {
         var images = Images.fromJson(jsonDecode(response.body));
 
         if (images.posters != null && images.posters!.isNotEmpty) {
-          print(images.posters?[0].filePath);
           var art = await get(Uri.parse('https://image.tmdb.org/t/p/original${images.posters![0].filePath!}'));
-          print(images.posters![0].filePath!);
           file.createSync(recursive: true);
           file.writeAsBytes(art.bodyBytes);
 

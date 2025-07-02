@@ -8,60 +8,39 @@ class TorrentGalaxy extends TorrentEngine {
   String name = "TorrentGalaxy";
 
   @override
-  Future<List<TorrentFile>?> search(List<String> searchTerms, {movie = false}) async {
+  Future<List<TorrentFile>?> search(String searchTerm, {movie = false}) async {
     String url;
     List<TorrentFile> torrents = [];
-    for (var term in searchTerms) {
-      String url;
-      if(movie){
-        url = 'https://torrentgalaxy.one/get-posts/keywords:$term:category:Anime:category:Movies';
-      } else {
-        url = 'https://torrentgalaxy.one/get-posts/keywords:$term:category:Anime:category:TV';
-      }
-      print(url);
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        Document document = parse(response.body);
-        List<Element> elements = document.querySelectorAll('a[title]');
+    if (movie) {
+      url = 'https://torrentgalaxy.one/get-posts/keywords:$searchTerm:category:Anime:category:Movies';
+    } else {
+      url = 'https://torrentgalaxy.one/get-posts/keywords:$searchTerm:category:Anime:category:TV';
+    }
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      Document document = parse(response.body);
 
-        for (final element in elements) {
-          var selec = element.querySelector('span');
-          if (selec != null && selec.attributes["src"] == "torrent") {
-            final href = element.attributes["href"];
+      List<Element> elements = document.querySelectorAll('.tgxtablerow');
 
-            final postDetail = await http.get(Uri.parse('https://torrentgalaxy.one$href'));
+      for (final element in elements) {
+        var selec = element.querySelector('span');
 
-            if (postDetail.statusCode == 200) {
-              Document document = parse(postDetail.body);
-              Document div = parse(document.querySelectorAll('div.torrentpagetable')[1].innerHtml);
-              final magnet = document.querySelectorAll('a.lift')[1].attributes["href"]!;
-              var elements = div.querySelectorAll('div.tprow');
-              var title = elements[0].children[1].children[0].text;
-              var uploadDate = elements[8].children[1].text;
-              var seeders = int.tryParse(elements[10].children[1].children[0].text.replaceFirst('Seeds', '').trim());
-              var leechers = int.tryParse(elements[10].children[1].children[1].text.replaceFirst('Leechers', '').trim());
-              var uploader = elements[7].children[1].text;
+        var title = element.querySelector('a[title]')!.text; // Title
+        var uploader = element.querySelector('.username')!.text; // Uploader
 
-              var sizeText = elements[5].children[1].text;
-              var sized = 0;
+        var size = TorrentHelper.convertSizeToMB(element.querySelectorAll('.badge')[0].text); // Size
 
-              if (sizeText.contains("GB")) {
-                var sizeTrimmed = sizeText.replaceAll('GB', '');
-                sized = (double.parse(sizeTrimmed) * 1000.0 * 1000000).toInt();
-              } else {
-                sized = (double.parse(sizeText.replaceAll('MB', '')) * 1000000).toInt();
-              }
+        var seedersLeechers = RegExp('[0-9]{1,2}/[0-9]{1,2}')
+            .firstMatch(element.querySelector('span[title="Seeders/Leechers"]')!.text.replaceAll(' ', '').replaceFirst('\n', ''))![0]!
+            .split('/');
 
-              var size = sized;
+        var seeders = int.parse(seedersLeechers[0]); // Seeders
+        var leechers = int.parse(seedersLeechers[1]); // Leechers
 
-              var torrentFile =
-                  TorrentFile(title: title, uploadedDate: uploadDate, size: size, seeders: seeders, leechers: leechers, uploader: uploader, magnet: magnet);
-              if (!torrents.contains(torrentFile)) {
-                torrents.add(torrentFile);
-              }
-            }
-          }
-        }
+        var href = 'https://torrentgalaxy.one${element.querySelector('[role=button]')!.attributes["href"]!}';
+
+        var torrentFile = TorrentFile(provider: TorrentProviders.TorrentGalaxy, title: title, uploader: uploader, seeders: seeders, leechers: leechers, size: size, href: href);
+        torrents.add(torrentFile);
       }
     }
     return torrents;

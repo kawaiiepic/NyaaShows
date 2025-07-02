@@ -44,7 +44,6 @@ class SelectFileState extends State<SelectFile> {
                     child: TextButton(
                         onPressed: () async {
                           await _selectFiles(super.widget.id, super.widget.torrentEpisode, overrideId: super.widget.files[index].id);
-                          print(super.widget.files[index].id);
                           unrestrickLink(link: await _getLink(super.widget.id), torrentEpisode: super.widget.torrentEpisode);
                         },
                         child: Text(super.widget.files[index].path))),
@@ -69,7 +68,6 @@ class SelectFileState extends State<SelectFile> {
             switch (torrentInfo.status) {
               case 'queued':
                 {
-                  print('Still downloading...');
                   var link = "";
                   await Future.doWhile(() async {
                     var newResponse = await http.get(url, headers: {'Authorization': 'Bearer $token'});
@@ -85,10 +83,6 @@ class SelectFileState extends State<SelectFile> {
                             case 'downloaded':
                               {
                                 link = responseInfo.links[0];
-                              }
-                            default:
-                              {
-                                print(responseInfo.status);
                               }
                           }
                         }
@@ -202,7 +196,6 @@ class SelectFileState extends State<SelectFile> {
 
       if (post.statusCode == 200) {
         Map<String, dynamic> json = jsonDecode(post.body);
-        print(json);
         String video = json["download"];
 
         Navigator.push(

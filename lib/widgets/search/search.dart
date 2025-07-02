@@ -11,7 +11,7 @@ import '../../trakt/json/movies/extended_movie.dart';
 import '../../trakt/json/search/search.dart' as json_search;
 import '../../trakt/json/shows/extended_show.dart';
 import '../../trakt/json/shows/watched_progress.dart';
-import '../../trakt/trakt_json.dart';
+import '../../trakt/trakt.dart';
 import '../../tvdb/tvdb.dart';
 import '../pages/movies/movie_expanded.dart';
 import '../pages/shows/show_expanded.dart';
@@ -56,8 +56,7 @@ class SearchState extends State {
               return _lastOptions;
             }
 
-            final List<json_search.SearchResults> options =
-                await TraktJson.search([SearchType.show, SearchType.movie, SearchType.person], _searchingWithQuery!);
+            final List<json_search.SearchResults> options = await Trakt.search([SearchType.show, SearchType.movie, SearchType.person], _searchingWithQuery!);
 
             List<Widget> options0 = [];
 
@@ -81,7 +80,7 @@ class SearchState extends State {
                           },
                         ));
 
-                ExtendedMovie movie = await TraktJson.extendedMovieFromId(entry.movie!.ids.trakt!);
+                ExtendedMovie movie = await Trakt.extendedMovieFromId(entry.movie!.ids.trakt!);
 
                 Widget container = Container(
                     padding: EdgeInsets.all(8),
@@ -133,7 +132,7 @@ class SearchState extends State {
                             return Uint8List(0);
                           },
                         ));
-                ExtendedShow show = await TraktJson.extendedShowFromId(entry.show!.ids.trakt!);
+                ExtendedShow show = await Trakt.extendedShowFromId(entry.show!.ids.trakt!);
                 // WatchedProgress progress = await TraktJson.watchedProgress(entry.show!.ids!.trakt!);
 
                 Widget container = Container(
@@ -142,9 +141,12 @@ class SearchState extends State {
                         borderRadius: BorderRadius.circular(10),
                         onTap: () async {
                           controller.closeView(show.title);
-                          WatchedProgress progress = await TraktJson.watchedProgress(entry.show!.ids.trakt!);
+                          WatchedProgress progress = await Trakt.watchedProgress(entry.show!.ids.trakt!);
                           NyaaShows.navigatorKey.currentState!.push(MaterialPageRoute(
-                            builder: (context) => ShowExpanded(show: show, watchedProgress: progress,),
+                            builder: (context) => ShowExpanded(
+                              show: show,
+                              watchedProgress: progress,
+                            ),
                           ));
                         },
                         child: Tooltip(

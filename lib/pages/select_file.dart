@@ -4,10 +4,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:media_kit/media_kit.dart';
-import 'package:nyaashows/pages/player.dart';
-import 'package:nyaashows/utils/utils.dart';
+import 'package:nyaashows/real-debrid/real_debrid.dart';
+import 'package:nyaashows/utils/common.dart';
+import 'package:nyaashows/widgets/pages/player/show_player.dart';
 
-import '../main.dart';
 import '../torrents/helper.dart';
 
 class SelectFile extends StatefulWidget {
@@ -64,7 +64,7 @@ class SelectFileState extends State<SelectFile> {
                                             flex: 1,
                                             child: Text(
                                                 "${((super.widget.files[index + 1]) as Set).elementAt(2)}")),
-                                        Utils.loading(),
+                                        Common.loading(),
                                         Text('$progress%'),
                                         LinearProgressIndicator(
                                           value: progress / 100,
@@ -80,7 +80,7 @@ class SelectFileState extends State<SelectFile> {
 
                           var id = ((super.widget.files[index + 1]) as Set).elementAt(0);
                           var fileId = ((super.widget.files[index + 1]) as Set).elementAt(1);
-                          var token = await NyaaShows.realDebrid.accessToken();
+                          var token = await RealDebrid.accessToken();
 
                           final url = Uri.https('api.real-debrid.com', '/rest/1.0/torrents/selectFiles/$id');
                           var post = await http.post(url, headers: {'Authorization': 'Bearer $token'}, body: {'files': fileId.toString()});
@@ -91,7 +91,6 @@ class SelectFileState extends State<SelectFile> {
                               var get2 = await http.get(url2, headers: {'Authorization': 'Bearer $token'});
                               Map<String, dynamic> decode2 = jsonDecode(get2.body);
 
-                              print(decode2['status']);
                               _alertSetState(
                                 () {
                                   progress = double.parse(decode2['progress'].toString());
@@ -110,7 +109,7 @@ class SelectFileState extends State<SelectFile> {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => VideoPlayer(
+                                          builder: (context) => ShowPlayer(
                                                 media: Media(video),
                                                 torrentEpisode: super.widget.torrentEpisode,
                                               )));

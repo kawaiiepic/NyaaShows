@@ -4,7 +4,7 @@ import 'package:flutter_platform_widgets/flutter_platform_widgets.dart';
 import '../../../torrents/helper.dart';
 import '../../../trakt/json/shows/extended_show.dart';
 import '../../../trakt/json/shows/watched_progress.dart';
-import '../../../trakt/trakt_json.dart';
+import '../../../trakt/trakt.dart';
 import '../../../utils/common.dart';
 import '../torrent/torrent_links.dart';
 import 'episodes.dart';
@@ -24,7 +24,7 @@ class ShowExpanded extends StatelessWidget {
       appBar: PlatformAppBar(),
       body: Center(
           child: FutureBuilder(
-        future: TraktJson.seasonsFromId(show.ids!.trakt),
+        future: Trakt.seasonsFromId(show.ids!.trakt),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final seasons = snapshot.data;
@@ -48,7 +48,7 @@ class ShowExpanded extends StatelessWidget {
                         episode.lastWatchedAt != null &&
                         DateTime.parse(episode.lastWatchedAt).compareTo(DateTime.parse(watchedProgress!.resetAt)) < 0) {
                       futureBuilder = FutureBuilder(
-                        future: TraktJson.episode(show.ids!.trakt, season.number, episode.number),
+                        future: Trakt.episode(show.ids!.trakt, season.number, episode.number),
                         builder: (context, snapshot) {
                           if (snapshot.hasData) {
                             var episode = snapshot.data!;

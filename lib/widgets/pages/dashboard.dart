@@ -8,12 +8,11 @@ import '../../torrents/helper.dart';
 import '../../trakt/json/enum/media_type.dart';
 import '../../trakt/json/sync/playback_progress.dart';
 import '../../trakt/json/sync/watched.dart';
-import '../../trakt/trakt_json.dart';
+import '../../trakt/trakt.dart';
 import '../../utils/common.dart';
 import '../search/search.dart';
 import 'shows/expanded_next_up.dart';
 import 'shows/show_expanded.dart';
-import 'torrent/torrent_links.dart';
 import '../../trakt/json/shows/episode.dart' as ShowsEpisode;
 
 class Dashboard extends StatefulWidget {
@@ -56,7 +55,7 @@ class _DashboardState extends State<Dashboard> {
 
   Widget nextUp() {
     return FutureBuilder(
-        future: TraktJson.nextUp(),
+        future: Trakt.nextUp(),
         builder: (_, snap) {
           if (snap.connectionState == ConnectionState.done) {
             if (snap.hasData) {
@@ -83,7 +82,7 @@ class _DashboardState extends State<Dashboard> {
                       FutureBuilder<ShowsEpisode.Episode>? futureBuilder;
 
                       return FutureBuilder(
-                        future: TraktJson.watchedProgress(watched.show.ids!.trakt!),
+                        future: Trakt.watchedProgress(watched.show.ids!.trakt!),
                         builder: (context, progressData) {
                           if (progressData.hasData) {
                             var progress = progressData.data!;
@@ -92,8 +91,8 @@ class _DashboardState extends State<Dashboard> {
                               for (var season in progress.seasons) {
                                 for (var episode in season.episodes) {
                                   if (episode.lastWatchedAt != null && DateTime.parse(episode.lastWatchedAt).compareTo(DateTime.parse(progress.resetAt)) < 0) {
-                                     futureBuilder = FutureBuilder(
-                                      future: TraktJson.episode(watched.show.ids!.trakt, season.number, episode.number),
+                                    futureBuilder = FutureBuilder(
+                                      future: Trakt.episode(watched.show.ids!.trakt, season.number, episode.number),
                                       builder: (context, snapshot) {
                                         if (snapshot.hasData) {
                                           var episode = snapshot.data!;
@@ -169,7 +168,7 @@ class _DashboardState extends State<Dashboard> {
                               }
 
                               return futureBuilder!;
-                                                        } else {
+                            } else {
                               if (progress.nextEpisode != null) {
                                 return Column(children: [
                                   Container(
@@ -193,10 +192,10 @@ class _DashboardState extends State<Dashboard> {
                                               items: [
                                                 PopupMenuItem(
                                                   onTap: () async {
-                                                    await TraktJson.addHistory(MediaType.episode, progress.nextEpisode!.ids.trakt!);
-                                                    await TraktJson.watchedProgress(watched.show.ids!.trakt!, refresh: true);
+                                                    await Trakt.addHistory(MediaType.episode, progress.nextEpisode!.ids.trakt!);
+                                                    await Trakt.watchedProgress(watched.show.ids!.trakt!, refresh: true);
                                                     setState(() {
-                                                      TraktJson.nextUpFuture = Future.value([]);
+                                                      Trakt.nextUpFuture = Future.value([]);
                                                     });
                                                   },
                                                   child: Text('Mark as Watched'),
@@ -214,26 +213,56 @@ class _DashboardState extends State<Dashboard> {
                                                                 watchedProgress: progress,
                                                               )),
                                                     ),
-                                                child: Stack(alignment: Alignment.topRight.add(FractionalOffset(0.4, 0.6)), children: [
+                                                child: Stack(alignment: Alignment.center, children: [
                                                   Ink(
                                                     decoration: BoxDecoration(
                                                         image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.cover),
                                                         borderRadius: BorderRadius.circular(18)),
                                                   ),
                                                   Ink(
-                                                    height: MediaQuery.of(context).size.height * 0.02,
-                                                    width: MediaQuery.of(context).size.height * 0.02,
-                                                    decoration: BoxDecoration(
-                                                        color: Theme.of(context).colorScheme.inversePrimary, borderRadius: BorderRadius.circular(40)),
-                                                    child: Tooltip(
-                                                        message:
-                                                            '${((progress.completed / progress.aired) * 100).round()}% watched\n${progress.completed}/${progress.aired} episodes\n${(progress.aired - progress.completed)} remaining',
-                                                        child: CircularProgressIndicator(
-                                                          strokeWidth: 5,
-                                                          value: progress.completed / progress.aired,
-                                                        )),
+                                                    child: IconButton(
+                                                      tooltip: "Play",
+                                                      iconSize: 36,
+                                                      hoverColor: Theme.of(context).colorScheme.inversePrimary,
+                                                      focusColor: Theme.of(context).colorScheme.inversePrimary,
+                                                      icon: Icon(Icons.play_arrow),
+                                                      onPressed: () async {
+                                                        var torrentEpisode = TorrentEpisode(
+                                                            showName: watched.show.title!,
+                                                            seasonId: progress.nextEpisode!.season,
+                                                            episodeId: progress.nextEpisode!.number,
+                                                            episodeName: progress.nextEpisode!.title!,
+                                                            seasonName: '',
+                                                            showYear: 0,
+                                                            episodeYear: 0,
+                                                            episodeIds: progress.nextEpisode!.ids,
+                                                            showIds: watched.show.ids!);
+                                                        TorrentHelper.quickPlay(torrentEpisode);
+                                                      },
+                                                    ),
                                                   ),
-                                                ]))),
+                                                ])
+                                                // child: Stack(alignment: Alignment.topRight.add(FractionalOffset(0.4, 0.6)), children: [
+                                                //   Ink(
+                                                //     decoration: BoxDecoration(
+                                                //         image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.cover),
+                                                //         borderRadius: BorderRadius.circular(18)),
+                                                //   ),
+                                                //   Ink(
+                                                //     height: MediaQuery.of(context).size.height * 0.02,
+                                                //     width: MediaQuery.of(context).size.height * 0.02,
+                                                //     decoration: BoxDecoration(
+                                                //         color: Theme.of(context).colorScheme.inversePrimary, borderRadius: BorderRadius.circular(40)),
+                                                //     child: Tooltip(
+                                                //         message:
+                                                //             '${((progress.completed / progress.aired) * 100).round()}% watched\n${progress.completed}/${progress.aired} episodes\n${(progress.aired - progress.completed)} remaining',
+                                                //         child: CircularProgressIndicator(
+                                                //           strokeWidth: 5,
+                                                //           value: progress.completed / progress.aired,
+                                                //         )),
+                                                //   ),
+                                                // ])
+                                                )),
                                       ),
                                     ),
                                   ),
@@ -338,7 +367,7 @@ class _DashboardState extends State<Dashboard> {
 
   Widget playbackProgress() {
     return FutureBuilder(
-        future: TraktJson.playbackProgress(),
+        future: Trakt.playbackProgress(),
         builder: (_, snap) {
           if (snap.hasData) {
             final List<PlaybackProgress> progressList = snap.data!;
@@ -353,13 +382,11 @@ class _DashboardState extends State<Dashboard> {
             if (progressList.isEmpty) {
               return Container();
             } else {
-              double titleFontSize = clampDouble(((MediaQuery.of(context).size.height * 0.12) * 0.15), 0.0, 12);
+              clampDouble(((MediaQuery.of(context).size.height * 0.12) * 0.15), 0.0, 12);
               double episodeTitleFontSize = clampDouble(((MediaQuery.of(context).size.height * 0.12) * 0.15), 0.0, 15);
               List<Widget> containers = [];
               for (final element in progressList) {
                 Widget? widget;
-
-                print(element.progress);
 
                 if (element.show != null) {
                   widget = FutureBuilder(
@@ -388,7 +415,7 @@ class _DashboardState extends State<Dashboard> {
                                         items: [
                                           PopupMenuItem(
                                             onTap: () async {
-                                              await TraktJson.removePlaybackItem(element.id);
+                                              await Trakt.removePlaybackItem(element.id);
                                               setState(() {});
                                             },
                                             child: Text('Remove'),
@@ -399,20 +426,16 @@ class _DashboardState extends State<Dashboard> {
                                       child: InkWell(
                                           borderRadius: BorderRadius.circular(12),
                                           onTap: () => {
-                                                Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                        builder: (context) => TorrentLinks(
-                                                            torrentEpisode: TorrentEpisode(
-                                                                showName: element.show!.title!,
-                                                                seasonId: element.episode!.season,
-                                                                episodeId: element.episode!.number,
-                                                                episodeName: element.episode!.title,
-                                                                seasonName: "",
-                                                                showYear: element.show!.year!,
-                                                                episodeYear: element.show!.year!,
-                                                                showIds: element.show!.ids!,
-                                                                episodeIds: element.episode!.ids))))
+                                                TorrentHelper.quickPlay(TorrentEpisode(
+                                                    showName: element.show!.title!,
+                                                    seasonId: element.episode!.season,
+                                                    episodeId: element.episode!.number,
+                                                    episodeName: element.episode!.title,
+                                                    seasonName: "",
+                                                    showYear: element.show!.year!,
+                                                    episodeYear: element.show!.year!,
+                                                    showIds: element.show!.ids!,
+                                                    episodeIds: element.episode!.ids))
                                               },
                                           child: Stack(
                                             alignment: Alignment.bottomCenter,
@@ -485,7 +508,7 @@ class _DashboardState extends State<Dashboard> {
                                           PopupMenuItem(
                                             onTap: () {
                                               setState(() {
-                                                TraktJson.removePlaybackItem(element.id);
+                                                Trakt.removePlaybackItem(element.id);
                                               });
                                             },
                                             child: Text('Remove'),

@@ -56,7 +56,7 @@ dependencies:
   # rust_lib_nyaashows:
   #   path: rust_builder
   # flutter_rust_bridge: 2.5.0
-  flutter_discord_rpc: ^1.0.0
+  #flutter_discord_rpc: ^1.0.0
   fluttertoast: ^8.2.8
 
 dev_dependencies:

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:nyaashows/data/trakt/profile.dart';
-import 'package:nyaashows/data/trakt/search/show.dart' as Search;
-import 'package:nyaashows/data/trakt/watched_progress.dart';
-import 'package:nyaashows/main.dart';
-import 'package:nyaashows/pages/secondRoute.dart';
+import 'package:nyaashows/tmdb/tmdb.dart';
+import 'package:nyaashows/trakt/json/enum/search_type.dart';
+import 'package:nyaashows/trakt/json/shows/extended_show.dart';
 import 'package:nyaashows/trakt/trakt.dart';
-import 'package:nyaashows/utils/utils.dart';
+import 'package:nyaashows/utils/common.dart';
+import 'package:nyaashows/widgets/main/main.dart';
+import 'package:nyaashows/widgets/pages/shows/show_expanded.dart';
 
-import '../data/trakt/show.dart';
+import '../real-debrid/real_debrid.dart';
+import '../trakt/json/enum/media_type.dart';
+import '../trakt/json/shows/watched_progress.dart';
+import '../trakt/json/sync/watched.dart';
+import '../trakt/json/users/extended_profile.dart';
+import '../tvdb/tvdb.dart';
+import 'menu.dart';
 
-class MyHomePageState extends State<MyHomePage> {
+class MyHomePageState extends State<Home> {
   ScrollController scrollController = ScrollController();
   ScrollController scrollController1 = ScrollController();
 
@@ -41,7 +47,7 @@ class MyHomePageState extends State<MyHomePage> {
         suggestionsBuilder: (context, controller) async {
           _searchingWithQuery = controller.text;
 
-          final List<Search.SearchShow> options = (await NyaaShows.trakt.search(SearchType.show, _searchingWithQuery!)).toList();
+          final options = (await Trakt.search([SearchType.show], _searchingWithQuery!)).toList();
 
           if (_searchingWithQuery != controller.text) {
             return _lastOptions;
@@ -49,48 +55,45 @@ class MyHomePageState extends State<MyHomePage> {
 
           List<Widget> options0 = [];
           for (var entry in options) {
-            var artwork = (await NyaaShows.tmdb.poster(entry.show!.ids!.tmdb != null ? entry.show!.ids!.tmdb! : 0).onError(
-              (error, stackTrace) {
-                return "https://i.ebayimg.com/images/g/ypkAAOSwnYphk0fJ/s-l400.jpg";
-              },
-            ));
+            var artwork = (await TMDB.poster(MediaType.show, entry.show!.ids.tmdb != null ? entry.show!.ids.tmdb! : ""));
 
-            Show? show = (await NyaaShows.trakt.show(entry.show!.ids!.trakt));
-            WatchedProgress? progress = (await NyaaShows.trakt.watchedProgress(entry.show!.ids!.trakt));
+            ExtendedShow? show = (await Trakt.extendedShowFromId(entry.show!.ids.trakt!));
+            WatchedProgress? progress = (await Trakt.watchedProgress(entry.show!.ids.trakt!));
 
             Widget container;
 
-            if (show != null) {
-              container = Container(
-                  padding: EdgeInsets.all(8),
-                  child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          controller.closeView(entry.show!.title!);
-                          var combinedShow = CombinedShow(show: show, watchedProgress: progress);
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => SecondRoute(combinedShow: combinedShow)));
-                        });
-                      },
-                      child: Tooltip(
-                          message: entry.show!.title!,
-                          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Ink(
-                                height: 100,
-                                width: 60,
-                                decoration: BoxDecoration(
-                                    image: DecorationImage(image: NetworkImage(artwork), fit: BoxFit.cover), borderRadius: BorderRadius.circular(10))),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('${entry.show!.title!} (${entry.show!.year?.toString()})'),
-                                Text(show.genres!.join(', '), maxLines: 3, overflow: TextOverflow.ellipsis,),
-                              ],
-                            )
-                          ]))));
+            container = Container(
+                padding: EdgeInsets.all(8),
+                child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        controller.closeView(entry.show!.title);
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => ShowExpanded(show: show)));
+                      });
+                    },
+                    child: Tooltip(
+                        message: entry.show!.title,
+                        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Ink(
+                              height: 100,
+                              width: 60,
+                              decoration: BoxDecoration(
+                                  image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.cover), borderRadius: BorderRadius.circular(10))),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${entry.show!.title} (${entry.show!.year?.toString()})'),
+                              Text(
+                                show.genres!.join(', '),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          )
+                        ]))));
 
-              options0.add(container);
-            }
-          }
+            options0.add(container);
+                    }
 
           _lastOptions = options0;
 
@@ -101,7 +104,7 @@ class MyHomePageState extends State<MyHomePage> {
   AppBar appBar() {
     return AppBar(
       backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      title: Text(widget.title),
+      title: Text("Home"),
       bottom: const TabBar(
         tabs: [
           Tab(
@@ -130,22 +133,18 @@ class MyHomePageState extends State<MyHomePage> {
                     switch (menu) {
                       case Menu.settings:
                         break;
-                      // TODO: Handle this case.
                       case Menu.trakt:
-                        NyaaShows.trakt.auth(context);
+                        Trakt.auth(context);
                         break;
-                      // TODO: Handle this case.
                       case Menu.about:
                         break;
-                      // TODO: Handle this case.
                       case Menu.realdebrid:
-                        NyaaShows.realDebrid.loginPopup(context);
+                        RealDebrid.login(context);
                         break;
-                      // TODO: Handle this case.
                     }
                   },
                   icon: FutureBuilder(
-                      future: NyaaShows.trakt.userData(),
+                      future: Trakt.userProfile(),
                       builder: (context, snapshot) {
                         Widget child;
                         if (snapshot.hasData) {
@@ -212,8 +211,8 @@ class MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     Avatar? iconUrl;
-    NyaaShows.trakt.userData().then((data) {
-      iconUrl = data?.images.avatar;
+    Trakt.userProfile().then((data) {
+      iconUrl = data.images.avatar;
     });
 
     return DefaultTabController(
@@ -229,90 +228,102 @@ class MyHomePageState extends State<MyHomePage> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   FutureBuilder(
-                      future: NyaaShows.trakt.accessToken(),
+                      future: Trakt.accessToken(),
                       builder: (context, snap) {
                         if (snap.hasData) {
                           return FutureBuilder(
-                              future: NyaaShows.trakt.nextUp(),
+                              future: Trakt.nextUp(),
                               builder: (_, snap) {
                                 if (snap.hasData) {
-                                  final List<CombinedShow> combinedShows = snap.data!;
+                                  final List<Watched> watchedList = snap.data!;
                                   double titleFontSize = ((MediaQuery.of(context).size.height * 0.1) * 0.11);
                                   double episodeTitleFontSize = ((MediaQuery.of(context).size.height * 0.1) * 0.1);
                                   List<Widget> containers = [];
                                   var index = 0;
-                                  combinedShows.forEach(
+                                  watchedList.forEach(
                                     (element) async {
-                                      final CombinedShow combinedShow = combinedShows[index];
+                                      final Watched watched = watchedList[index];
                                       index++;
 
                                       var widget = FutureBuilder(
-                                        future: NyaaShows.tvdb.artwork(combinedShow.show.ids!.tvdb!),
+                                        future: TVDB.artwork(MediaType.show, watched.show.ids!.tvdb!),
                                         builder: (context, snapshot) {
                                           if (snapshot.hasData) {
                                             var artwork = snapshot.data!;
 
-                                            return Column(children: [
-                                              Container(
-                                                constraints: BoxConstraints(minWidth: 80, minHeight: 130),
-                                                height: MediaQuery.of(context).size.height * 0.2,
-                                                width: MediaQuery.of(context).size.width * 0.075,
-                                                // alignment: Alignment.center,
-                                                // margin: const EdgeInsets.all(8),
-                                                child: Material(
-                                                    child: InkWell(
-                                                        onTap: () {
-                                                          Navigator.push(
-                                                            context,
-                                                            MaterialPageRoute(builder: (context) => SecondRoute(combinedShow: combinedShow)),
-                                                          );
-                                                        },
-                                                        child: Ink(
-                                                          decoration: BoxDecoration(
-                                                              image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.fill),
-                                                              borderRadius: BorderRadius.circular(18)),
-                                                          child: Tooltip(
-                                                            message: combinedShow.show.title,
-                                                            child: ClipRRect(
-                                                              borderRadius: BorderRadius.circular(16),
-                                                              child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-                                                                Tooltip(
-                                                                  message:
-                                                                      '${((combinedShow.watchedProgress.completed / combinedShow.watchedProgress.aired) * 100).round()}% watched\n${combinedShow.watchedProgress.completed}/${combinedShow.watchedProgress.aired} episodes\n${(combinedShow.watchedProgress.aired - combinedShow.watchedProgress.completed)} remaining',
-                                                                  child: LinearProgressIndicator(
-                                                                    minHeight: 8,
-                                                                    value: combinedShow.watchedProgress.completed / combinedShow.watchedProgress.aired,
+                                            return FutureBuilder(
+                                              future: Trakt.watchedProgress(watched.show.ids!.trakt!),
+                                              builder: (context, snapshot) {
+                                                if (snapshot.hasData) {
+                                                  var watchedProgress = snapshot.data!;
+
+                                                  return Column(children: [
+                                                    Container(
+                                                      constraints: BoxConstraints(minWidth: 80, minHeight: 130),
+                                                      height: MediaQuery.of(context).size.height * 0.2,
+                                                      width: MediaQuery.of(context).size.width * 0.075,
+                                                      child: Material(
+                                                          child: InkWell(
+                                                              onTap: () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(builder: (context) => ShowExpanded(show: watched.show)),
+                                                                );
+                                                              },
+                                                              child: Ink(
+                                                                decoration: BoxDecoration(
+                                                                    image: DecorationImage(image: MemoryImage(artwork), fit: BoxFit.fill),
+                                                                    borderRadius: BorderRadius.circular(18)),
+                                                                child: Tooltip(
+                                                                  message: watched.show.title,
+                                                                  child: ClipRRect(
+                                                                    borderRadius: BorderRadius.circular(16),
+                                                                    child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                                                                      Text("Gay")
+                                                                      // Tooltip(
+                                                                      //   message:
+                                                                      //       '${((watchedProgress.completed / watchedProgress.aired) * 100).round()}% watched\n${watchedProgress.completed}/${watchedProgress.aired} episodes\n${(watchedProgress.aired - watchedProgress.completed)} remaining',
+                                                                      //   child: LinearProgressIndicator(
+                                                                      //     minHeight: 8,
+                                                                      //     value: watchedProgress.completed / watchedProgress.aired,
+                                                                      //   ),
+                                                                      // ),
+                                                                    ]),
                                                                   ),
                                                                 ),
-                                                              ]),
-                                                            ),
-                                                          ),
-                                                        ))),
-                                              ),
-                                              Text(
-                                                'S${combinedShow.watchedProgress.nextEpisode!.season}:E${combinedShow.watchedProgress.nextEpisode!.number}',
-                                                textAlign: TextAlign.center,
-                                                textHeightBehavior: TextHeightBehavior(leadingDistribution: TextLeadingDistribution.even),
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(fontSize: titleFontSize, fontWeight: FontWeight.bold),
-                                              ),
-                                              Tooltip(
-                                                  message: combinedShow.watchedProgress.nextEpisode!.title,
-                                                  child: Container(
-                                                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.075),
-                                                    child: Text(
-                                                      combinedShow.watchedProgress.nextEpisode!.title,
-                                                      textAlign: TextAlign.center,
-                                                      maxLines: 3,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: TextStyle(fontSize: episodeTitleFontSize),
+                                                              ))),
                                                     ),
-                                                  ))
-                                            ]);
+                                                    Text(
+                                                      'S${watchedProgress.nextEpisode!.season}:E${watchedProgress.nextEpisode!.number}',
+                                                      textAlign: TextAlign.center,
+                                                      textHeightBehavior: TextHeightBehavior(leadingDistribution: TextLeadingDistribution.even),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: TextStyle(fontSize: titleFontSize, fontWeight: FontWeight.bold),
+                                                    ),
+                                                    Tooltip(
+                                                        message: watchedProgress.nextEpisode!.title,
+                                                        child: Container(
+                                                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.075),
+                                                          child: Text(
+                                                            watchedProgress.nextEpisode!.title!,
+                                                            textAlign: TextAlign.center,
+                                                            maxLines: 3,
+                                                            overflow: TextOverflow.ellipsis,
+                                                            style: TextStyle(fontSize: episodeTitleFontSize),
+                                                          ),
+                                                        ))
+                                                  ]);
+                                                } else if (snapshot.hasError) {
+                                                  return Common.error();
+                                                } else {
+                                                  return Common.loading();
+                                                }
+                                              },
+                                            );
                                           } else if (snapshot.hasError) {
-                                            return Utils.error();
+                                            return Common.error();
                                           } else {
-                                            return Utils.loading();
+                                            return Common.loading();
                                           }
                                         },
                                       );
@@ -326,31 +337,29 @@ class MyHomePageState extends State<MyHomePage> {
 
                                   containers.add(
                                     Column(children: [
-                                      Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-
-                                      Container(
-                                        constraints: BoxConstraints(minWidth: 80, minHeight: 130),
-                                        height: MediaQuery.of(context).size.height * 0.2,
-                                        width: MediaQuery.of(context).size.width * 0.075,
-                                        // alignment: Alignment.center,
-                                        // margin: const EdgeInsets.all(8),
-                                        child: Material(
-                                            child: InkWell(
-                                                onTap: () {
-                                                  // Navigator.push(
-                                                  //   context,
-                                                  //   MaterialPageRoute(builder: (context) => SecondRoute(combinedShow: combinedShow)),
-                                                  // );
-                                                },
-                                                child: Ink(
-                                                  decoration: BoxDecoration(color: Colors.purple, borderRadius: BorderRadius.circular(18)),
-                                                  child: Tooltip(
-                                                    message: 'View More',
-                                                  ),
-                                                ))),
-                                      ), Icon(Icons.book, size: 50),
+                                      Stack(alignment: Alignment.center, children: [
+                                        Container(
+                                          constraints: BoxConstraints(minWidth: 80, minHeight: 130),
+                                          height: MediaQuery.of(context).size.height * 0.2,
+                                          width: MediaQuery.of(context).size.width * 0.075,
+                                          // alignment: Alignment.center,
+                                          // margin: const EdgeInsets.all(8),
+                                          child: Material(
+                                              child: InkWell(
+                                                  onTap: () {
+                                                    // Navigator.push(
+                                                    //   context,
+                                                    //   MaterialPageRoute(builder: (context) => SecondRoute(combinedShow: combinedShow)),
+                                                    // );
+                                                  },
+                                                  child: Ink(
+                                                    decoration: BoxDecoration(color: Colors.purple, borderRadius: BorderRadius.circular(18)),
+                                                    child: Tooltip(
+                                                      message: 'View More',
+                                                    ),
+                                                  ))),
+                                        ),
+                                        Icon(Icons.book, size: 50),
                                       ]),
                                       Text('View all')
                                     ]),
@@ -363,20 +372,18 @@ class MyHomePageState extends State<MyHomePage> {
                                         children: containers,
                                       ));
                                 } else if (snap.hasError) {
-                                  return Utils.error();
+                                  return Common.error();
                                 } else {
-                                  return Utils.loading();
+                                  return Common.loading();
                                 }
                               });
                         } else if (snap.hasError) {
-                          NyaaShows.trakt.auth(context).then((value) {
-                            if (value) {
-                              setState(() {});
-                            }
+                          Trakt.auth(context).then((value) {
+                            setState(() {});
                           });
                           return const Text("Trakt-connection is required to use this app.");
                         } else {
-                          return Utils.loading();
+                          return Common.loading();
                         }
                       }),
                   Text(
